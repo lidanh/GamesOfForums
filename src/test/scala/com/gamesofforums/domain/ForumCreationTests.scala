@@ -34,6 +34,6 @@ class ForumCreationTests extends Specification {
       val policy = null;
 
       forum.invalidInput(forumName,policy) must beTrue
-    }
+    } 
   }
 }
