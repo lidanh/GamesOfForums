@@ -1,6 +1,6 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.exceptions.{ForumCreationException, InvalidDataException}
+import com.gamesofforums.exceptions.{SubForumCreationException, InvalidDataException}
 import com.twitter.util.{Throw, Return}
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
@@ -8,9 +8,9 @@ import org.specs2.specification.Scope
 /**
  * Created by Guy Gonen on 05/04/2015.
  */
-class ForumTests extends Specification{
+class SubForumCreationTests extends Specification{
   trait Ctx extends Scope {
-    val forum = new Forum("Base");
+    val forum = new Forum("Base", ForumPolicy());
   }
 
   "Create new sub-forum" should {
@@ -24,14 +24,14 @@ class ForumTests extends Specification{
       val subForumName = ""
       val moderators = List ("Woot", "What")
 
-      forum.createNewSubforum(subForumName, moderators) must be_==(Throw(ForumCreationException("Invalid input: Creating subforum.")))
+      forum.createNewSubforum(subForumName, moderators) must be_==(Throw(SubForumCreationException("Invalid input: Creating subforum.")))
     }
 
     "Failure for invalid morderators" in new Ctx {
       val subForumName = "subForumName"
       val moderators = List ()
 
-      forum.createNewSubforum(subForumName, moderators) must be_==(Throw(ForumCreationException("Invalid input: Creating subforum.")))
+      forum.createNewSubforum(subForumName, moderators) must be_==(Throw(SubForumCreationException("Invalid input: Creating subforum.")))
     }
 
     "Failure for duplicate forums names" in new Ctx {
@@ -40,7 +40,7 @@ class ForumTests extends Specification{
       val moderators2 = List ("Agent Smith1", "Agent Smith2") // ... And so on.
 
       forum.createNewSubforum(subForumName, moderators1)
-      forum.createNewSubforum(subForumName, moderators2) must be_==(Throw(ForumCreationException("Duplicate forum names")))
+      forum.createNewSubforum(subForumName, moderators2) must be_==(Throw(SubForumCreationException("Duplicate forum names")))
     }
 
 
