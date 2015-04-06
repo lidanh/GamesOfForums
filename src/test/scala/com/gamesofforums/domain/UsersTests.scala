@@ -36,9 +36,7 @@ class UsersTests extends Specification {
     }
 
     "failed for an invalid password (doesn't meet the current password policy)" in {
-      val userManagerWithPolicy = new UsersManager(Some(new PasswordPolicy {
-        override def isValid(password: String): Boolean = password.length > 1
-      }))
+      val userManagerWithPolicy = new UsersManager(Option(PasswordPolicy.getPasswordPolicy("weak")))
 
       userManagerWithPolicy.register("guy", "gonen", "guyg@gmail.com", "") must be_==(Throw(InvalidDataException("Invalid password")))
     }
