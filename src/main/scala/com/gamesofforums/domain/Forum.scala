@@ -1,6 +1,7 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.exceptions.{ForumCreationException, SubForumCreationException, RegistrationException, InvalidDataException}
+import com.gamesofforums.domain.Policies.ForumPolicy
+import com.gamesofforums.exceptions.{ForumCreationException, SubForumCreationException}
 import com.twitter.util.Try
 
 /**

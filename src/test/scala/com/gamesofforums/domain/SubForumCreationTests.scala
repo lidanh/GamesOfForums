@@ -1,7 +1,8 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.exceptions.{SubForumCreationException, InvalidDataException}
-import com.twitter.util.{Throw, Return}
+import com.gamesofforums.domain.Policies.ForumPolicy
+import com.gamesofforums.exceptions.SubForumCreationException
+import com.twitter.util.{Return, Throw}
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
@@ -10,7 +11,7 @@ import org.specs2.specification.Scope
  */
 class SubForumCreationTests extends Specification{
   trait Ctx extends Scope {
-    val forum = new Forum("Base", ForumPolicy());
+    val forum = new Forum("Base", ForumPolicy())
   }
 
   "Create new sub-forum" should {

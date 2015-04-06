@@ -1,8 +1,6 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.domain.Forum
-import com.gamesofforums.exceptions.{ForumCreationException, SubForumCreationException}
-import com.twitter.util.{Throw, Return}
+import com.gamesofforums.domain.Policies.ForumPolicy
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
@@ -34,6 +32,6 @@ class ForumCreationTests extends Specification {
       val policy = null;
 
       forum.invalidInput(forumName,policy) must beTrue
-    } 
+    }
   }
 }

@@ -1,7 +1,6 @@
 package com.gamesofforums.domain
 
-import java.util.regex.Pattern
-
+import com.gamesofforums.domain.Policies.PasswordPolicy
 import com.gamesofforums.exceptions.{InvalidDataException, RegistrationException}
 import com.twitter.util.Try
 
