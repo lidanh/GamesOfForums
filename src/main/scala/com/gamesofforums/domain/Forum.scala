@@ -9,7 +9,7 @@ import com.twitter.util.Try
  */
 case class Forum (forumName : String, policy: ForumPolicy){
   if (invalidInput(forumName, policy)) throw (ForumCreationException("Invalid input: Creating forum."))
-  val subForums = scala.collection.mutable.Map[String, SubForum]()
+  var subForums = scala.collection.mutable.Map[String, SubForum]()
 
   def createNewSubforum (subforumName : String, moderators : List[String]): Try[String] ={
     Try {
@@ -20,6 +20,10 @@ case class Forum (forumName : String, policy: ForumPolicy){
 
       subforumName
     }
+  }
+
+  def watchSubForumsList(): List[SubForum] = {
+    subForums.values.toList
   }
 
   def invalidInput(forumName : String, policy: ForumPolicy) : Boolean =  {
