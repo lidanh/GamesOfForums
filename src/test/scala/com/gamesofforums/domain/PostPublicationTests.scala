@@ -8,7 +8,7 @@ import org.specs2.specification.Scope
 /**
  * Created by Guy Gonen on 08/04/2015.
  */
-class TopicPublicationTests extends Specification {
+class PostPublicationTests extends Specification {
 
   trait Ctx extends Scope {
     val subForum = new SubForum("Base", List("Tyrion", "Tywin"))
