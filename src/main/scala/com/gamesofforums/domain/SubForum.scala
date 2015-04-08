@@ -8,12 +8,12 @@ import com.twitter.util.Try
  */
 case class SubForum (forumName:String, moderators:List[String]){
   if (invalidSubforumInput()) throw (SubForumCreationException("Invalid input: Creating subforum."))
-  var subForums = scala.collection.mutable.Map[String, Post]()
+  var posts = scala.collection.mutable.Map[String, Post]()
 
-  def publishNewTopic(title: String, content: String): Try[String] = {
+  def publishNewPost(title: String, content: String): Try[String] = {
     Try {
-      if (subForums.contains(title)) throw TopicException("Duplicated topic.")
-      subForums.put(title, Post(title, content))
+      if (posts.contains(title)) throw TopicException("Duplicated topic.")
+      posts.put(title, Post(title, content))
       title
     }
   }

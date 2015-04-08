@@ -19,21 +19,21 @@ class PostPublicationTests extends Specification {
       var topicTitle = "someTitle"
       var topicContent = "someContent"
 
-      subForum.publishNewTopic(topicTitle, topicContent) must be_==(Return(topicTitle))
+      subForum.publishNewPost(topicTitle, topicContent) must be_==(Return(topicTitle))
     }
 
     "Failure for no topic" in new Ctx {
       var topicTitle = ""
       var topicContent = "someContent"
 
-      subForum.publishNewTopic(topicTitle, topicContent) must be_==(Throw(TopicException("Invalid input.")))
+      subForum.publishNewPost(topicTitle, topicContent) must be_==(Throw(TopicException("Invalid input.")))
     }
 
     "Failure for no content" in new Ctx {
       var topicTitle = "someTitle"
       var topicContent = ""
 
-      subForum.publishNewTopic(topicTitle, topicContent) must be_==(Throw(TopicException("Invalid input.")))
+      subForum.publishNewPost(topicTitle, topicContent) must be_==(Throw(TopicException("Invalid input.")))
     }
 
     "Failure for duplication of topics" in new Ctx {
@@ -41,8 +41,8 @@ class PostPublicationTests extends Specification {
       var topicContent = "someContent"
       var topicOtherContent = "otherContent"
 
-      subForum.publishNewTopic(topicTitle, topicContent)
-      subForum.publishNewTopic(topicTitle, topicOtherContent) must be_==(Throw(TopicException("Duplicated topic.")))
+      subForum.publishNewPost(topicTitle, topicContent)
+      subForum.publishNewPost(topicTitle, topicOtherContent) must be_==(Throw(TopicException("Duplicated topic.")))
     }
 
     "Success for duplication of contents" in new Ctx {
@@ -50,8 +50,8 @@ class PostPublicationTests extends Specification {
       var topicOtherTitle = "someOtherTitle"
       var topicContent = "someContent"
 
-      subForum.publishNewTopic(topicTitle, topicContent)
-      subForum.publishNewTopic(topicOtherTitle, topicContent) must be_==(Return(topicOtherTitle))
+      subForum.publishNewPost(topicTitle, topicContent)
+      subForum.publishNewPost(topicOtherTitle, topicContent) must be_==(Return(topicOtherTitle))
     }
 
   }
