@@ -1,6 +1,6 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.exceptions.TopicException
+import com.gamesofforums.exceptions.PostException
 import com.twitter.util.{Return, Throw}
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
@@ -26,14 +26,14 @@ class PostPublicationTests extends Specification {
       var topicTitle = ""
       var topicContent = "someContent"
 
-      subForum.publishNewPost(topicTitle, topicContent) must be_==(Throw(TopicException("Invalid input.")))
+      subForum.publishNewPost(topicTitle, topicContent) must be_==(Throw(PostException("Invalid input.")))
     }
 
     "Failure for no content" in new Ctx {
       var topicTitle = "someTitle"
       var topicContent = ""
 
-      subForum.publishNewPost(topicTitle, topicContent) must be_==(Throw(TopicException("Invalid input.")))
+      subForum.publishNewPost(topicTitle, topicContent) must be_==(Throw(PostException("Invalid input.")))
     }
 
     "Failure for duplication of topics" in new Ctx {
@@ -42,7 +42,7 @@ class PostPublicationTests extends Specification {
       var topicOtherContent = "otherContent"
 
       subForum.publishNewPost(topicTitle, topicContent)
-      subForum.publishNewPost(topicTitle, topicOtherContent) must be_==(Throw(TopicException("Duplicated topic.")))
+      subForum.publishNewPost(topicTitle, topicOtherContent) must be_==(Throw(PostException("Duplicated topic.")))
     }
 
     "Success for duplication of contents" in new Ctx {

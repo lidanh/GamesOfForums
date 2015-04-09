@@ -1,7 +1,7 @@
 package com.gamesofforums.domain
 
 import com.gamesofforums.domain.Policies.Message
-import com.gamesofforums.exceptions.TopicException
+import com.gamesofforums.exceptions.PostException
 import com.twitter.util.Try
 
 import scala.collection.mutable
@@ -11,7 +11,7 @@ import scala.collection.mutable
  * Created by Guy Gonen on 08/04/2015.
  */
 case class Post(title: String, content: String) extends Message {
-  if (title.isEmpty || content.isEmpty) throw TopicException("Invalid input.")
+  if (title.isEmpty || content.isEmpty) throw PostException("Invalid input.")
 
   var postComments = mutable.LinkedHashMap[String, Comment]()
 
@@ -22,6 +22,16 @@ case class Post(title: String, content: String) extends Message {
       postComments.put(content, Comment(content))
       content
     }
+  }
+
+  // Will be used before deletion
+  def deleteAllComments(): Unit = {
+    unSubscribeUsers()
+    postComments.clear()
+  }
+
+  def unSubscribeUsers() = {
+
   }
 
 }

@@ -1,20 +1,20 @@
 package com.gamesofforums.domain
 
 import com.gamesofforums.domain.Policies.ForumPolicy
-import com.gamesofforums.exceptions.{ForumCreationException, SubForumCreationException}
+import com.gamesofforums.exceptions.{ForumException, SubForumException}
 import com.twitter.util.Try
 
 /**
  * Created by Guy Gonen on 05/04/2015.
  */
 case class Forum (forumName : String, policy: ForumPolicy){
-  if (invalidInput(forumName, policy)) throw (ForumCreationException("Invalid input: Creating forum."))
+  if (invalidInput(forumName, policy)) throw (ForumException("Invalid input: Creating forum."))
   var subForums = scala.collection.mutable.Map[String, SubForum]()
 
   def createNewSubforum (subforumName : String, moderators : List[String]): Try[String] ={
     Try {
       // check duplication
-      if (subForums.contains(subforumName)) throw SubForumCreationException("Duplicate forum names")
+      if (subForums.contains(subforumName)) throw SubForumException("Duplicate forum names")
 
       subForums.put(subforumName, SubForum(subforumName, moderators))
 

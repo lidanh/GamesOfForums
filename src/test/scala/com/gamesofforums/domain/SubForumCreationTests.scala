@@ -1,7 +1,7 @@
 package com.gamesofforums.domain
 
 import com.gamesofforums.domain.Policies.ForumPolicy
-import com.gamesofforums.exceptions.SubForumCreationException
+import com.gamesofforums.exceptions.SubForumException
 import com.twitter.util.{Return, Throw}
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
@@ -25,14 +25,14 @@ class SubForumCreationTests extends Specification{
       val subForumName = ""
       val moderators = List ("Woot", "What")
 
-      forum.createNewSubforum(subForumName, moderators) must be_==(Throw(SubForumCreationException("Invalid input: Creating subforum.")))
+      forum.createNewSubforum(subForumName, moderators) must be_==(Throw(SubForumException("Invalid input: Creating subforum.")))
     }
 
     "Failure for invalid morderators" in new Ctx {
       val subForumName = "subForumName"
       val moderators = List ()
 
-      forum.createNewSubforum(subForumName, moderators) must be_==(Throw(SubForumCreationException("Invalid input: Creating subforum.")))
+      forum.createNewSubforum(subForumName, moderators) must be_==(Throw(SubForumException("Invalid input: Creating subforum.")))
     }
 
     "Failure for duplicate forums names" in new Ctx {
@@ -41,7 +41,7 @@ class SubForumCreationTests extends Specification{
       val moderators2 = List ("Agent Smith1", "Agent Smith2") // ... And so on.
 
       forum.createNewSubforum(subForumName, moderators1)
-      forum.createNewSubforum(subForumName, moderators2) must be_==(Throw(SubForumCreationException("Duplicate forum names")))
+      forum.createNewSubforum(subForumName, moderators2) must be_==(Throw(SubForumException("Duplicate forum names")))
     }
 
 
