@@ -22,6 +22,16 @@ case class Forum (forumName : String, policy: ForumPolicy){
     }
   }
 
+  def deleteSubForum(subForumName: String): Try[Unit] = {
+    Try {
+      if (!subForums.contains(subForumName)) throw SubForumException("SubForum didn't exist or already deleted.")
+      subForums.foreach {
+        case (key, subForum) => subForum.deleteAllPosts()
+      }
+      subForums.remove(subForumName)
+    }
+  }
+
   def watchSubForumsList(): List[SubForum] = {
     subForums.values.toList
   }

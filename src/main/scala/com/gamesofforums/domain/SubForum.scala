@@ -28,6 +28,13 @@ case class SubForum (forumName:String, moderators:List[String]){
     }
   }
 
+  def deleteAllPosts(): Unit = {
+    posts.foreach {
+      case (key, post) => post.deleteAllComments()
+    }
+    posts.clear()
+  }
+
   def watchPost(title: String): Option[Post] = posts.get(title)
 
   def invalidSubforumInput(): Boolean ={
