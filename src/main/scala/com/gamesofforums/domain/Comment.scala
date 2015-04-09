@@ -1,6 +1,5 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.domain.Policies.Message
 import com.gamesofforums.exceptions.CommentException
 
 /**
