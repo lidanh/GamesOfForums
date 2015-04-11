@@ -1,6 +1,6 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.domain.Policies.ForumPolicy
+import com.gamesofforums.domain.policies.ForumPolicy
 import com.gamesofforums.exceptions.SubForumException
 import com.twitter.util.{Return, Throw}
 import org.specs2.mutable.Specification
@@ -12,7 +12,7 @@ import org.specs2.specification.Scope
 class SubForumDeletionTests extends Specification {
 
   trait Ctx extends Scope {
-    val forum = new Forum("Base", ForumPolicy());
+    val forum = new Forum("Base", ForumPolicy())
     forum.createNewSubforum("Westeros", List("Tommen", "Cersei"))
     forum.createNewSubforum("The North", List("Jon Snow", "Stanis"))
     forum.createNewSubforum("Winterfall", List("Ned Stark", "Robb Stark"))

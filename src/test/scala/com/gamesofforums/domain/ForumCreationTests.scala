@@ -1,6 +1,6 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.domain.Policies.ForumPolicy
+import com.gamesofforums.domain.policies.ForumPolicy
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
@@ -10,11 +10,11 @@ import org.specs2.specification.Scope
 class ForumCreationTests extends Specification {
   "Create new sub-forum" should {
     trait Ctx extends Scope {
-      val forum = new Forum("Base", ForumPolicy());
+      val forum = new Forum("Base", ForumPolicy())
     }
 
     "Success for valid forum" in new Ctx {
-      val forumName = "ValidForumName";
+      val forumName = "ValidForumName"
       val policy = ForumPolicy()
 
       forum.invalidInput(forumName,policy) must beFalse
@@ -28,8 +28,8 @@ class ForumCreationTests extends Specification {
     }
 
     "Failure for invalid policy" in new Ctx {
-      val forumName = "ValidForumName";
-      val policy = null;
+      val forumName = "ValidForumName"
+      val policy = null
 
       forum.invalidInput(forumName,policy) must beTrue
     }

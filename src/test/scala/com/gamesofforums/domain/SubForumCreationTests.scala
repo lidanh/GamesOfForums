@@ -1,6 +1,6 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.domain.Policies.ForumPolicy
+import com.gamesofforums.domain.policies.ForumPolicy
 import com.gamesofforums.exceptions.SubForumException
 import com.twitter.util.{Return, Throw}
 import org.specs2.mutable.Specification

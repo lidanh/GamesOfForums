@@ -7,8 +7,4 @@ import com.gamesofforums.exceptions.CommentException
  */
 case class Comment(content: String) extends Message {
   if (content.isEmpty) throw CommentException("Invalid comment.")
-
-  def getContent(): String = content
-
-
 }

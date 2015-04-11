@@ -12,9 +12,7 @@ import scala.collection.mutable
 case class Post(title: String, content: String) extends Message {
   if (title.isEmpty || content.isEmpty) throw PostException("Invalid input.")
 
-  var postComments = mutable.LinkedHashMap[String, Comment]()
-
-  def getContent(): String = content
+  val postComments = mutable.LinkedHashMap[String, Comment]()
 
   def newCommentOnPost(content: String): Try[String] = {
     Try {
@@ -25,11 +23,11 @@ case class Post(title: String, content: String) extends Message {
 
   // Will be used before deletion
   def deleteAllComments(): Unit = {
-    unSubscribeUsers()
+    unsubscribeUsers()
     postComments.clear()
   }
 
-  def unSubscribeUsers() = {
+  def unsubscribeUsers() = {
 
   }
 

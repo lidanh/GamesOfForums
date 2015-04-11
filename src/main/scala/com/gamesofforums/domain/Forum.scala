@@ -1,6 +1,6 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.domain.Policies.ForumPolicy
+import com.gamesofforums.domain.policies.ForumPolicy
 import com.gamesofforums.exceptions.{ForumException, SubForumException}
 import com.twitter.util.Try
 
@@ -8,8 +8,10 @@ import com.twitter.util.Try
  * Created by Guy Gonen on 05/04/2015.
  */
 case class Forum (forumName : String, policy: ForumPolicy){
-  if (invalidInput(forumName, policy)) throw (ForumException("Invalid input: Creating forum."))
-  var subForums = scala.collection.mutable.Map[String, SubForum]()
+  if (invalidInput(forumName, policy))
+    throw (ForumException("Invalid input: Creating forum."))
+
+  val subForums = scala.collection.mutable.Map[String, SubForum]()
 
   def createNewSubforum (subforumName : String, moderators : List[String]): Try[String] ={
     Try {
@@ -25,9 +27,7 @@ case class Forum (forumName : String, policy: ForumPolicy){
   def deleteSubForum(subForumName: String): Try[Unit] = {
     Try {
       if (!subForums.contains(subForumName)) throw SubForumException("SubForum didn't exist or already deleted.")
-      subForums.foreach {
-        case (key, subForum) => subForum.deleteAllPosts()
-      }
+      subForums.values.foreach(_.deleteAllPosts())
       subForums.remove(subForumName)
     }
   }
@@ -36,19 +36,11 @@ case class Forum (forumName : String, policy: ForumPolicy){
     subForums.values.toList
   }
 
-  def invalidInput(forumName : String, policy: ForumPolicy) : Boolean =  {
-    return (invalidName(forumName) || invalidPolicy(policy))
-  }
+  def invalidInput(forumName : String, policy: ForumPolicy) : Boolean =  invalidName(forumName) || invalidPolicy(policy)
 
-  def invalidName (forumName : String) : Boolean = {
-    if (forumName.size<2) return true
-    false
-  }
+  def invalidName (forumName : String) : Boolean = forumName.size < 2
 
-  def invalidPolicy(policy: ForumPolicy) : Boolean = {
-    if(policy==null) return true;
-    false
-  }
+  def invalidPolicy(policy: ForumPolicy) : Boolean = policy == null
 
 
 }

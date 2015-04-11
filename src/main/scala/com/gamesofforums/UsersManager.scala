@@ -1,6 +1,7 @@
-package com.gamesofforums.domain
+package com.gamesofforums
 
-import com.gamesofforums.domain.Policies.PasswordPolicy
+import com.gamesofforums.domain.policies.PasswordPolicy
+import com.gamesofforums.domain.User
 import com.gamesofforums.exceptions.{InvalidDataException, RegistrationException}
 import com.twitter.util.Try
 

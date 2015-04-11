@@ -1,6 +1,6 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.domain.Policies.ForumPolicy
+import com.gamesofforums.domain.policies.ForumPolicy
 import org.specs2.mutable.Specification
 
 /**

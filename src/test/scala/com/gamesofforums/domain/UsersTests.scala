@@ -1,6 +1,7 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.domain.Policies.PasswordPolicy
+import com.gamesofforums.UsersManager
+import com.gamesofforums.domain.policies.PasswordPolicy
 import com.gamesofforums.exceptions.{InvalidDataException, RegistrationException}
 import com.twitter.util.{Return, Throw}
 import org.specs2.mutable.Specification

@@ -1,4 +1,4 @@
-package com.gamesofforums.domain.Policies
+package com.gamesofforums.domain.policies
 
 import com.gamesofforums.exceptions.ForumPolicyException
 import com.twitter.util.Try

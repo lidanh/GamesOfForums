@@ -1,52 +1,39 @@
-package com.gamesofforums.domain.Policies
+package com.gamesofforums.domain.policies
 
 trait PasswordPolicy {
+  val policyType: String
+
   def isValid(password: String): Boolean
 
-  def getPolicyType(): String
+  def getPolicyType = policyType
 }
 
 object PasswordPolicy {
 
   def getPasswordPolicy(s: String): PasswordPolicy = {
     s match {
-      case "weak" => new weakPasswordPolicy()
-      case "medium" => new mediumPasswordPolicy()
-      case "best" => new bestPasswordPolicy()
+      case "weak" => new WeakPasswordPolicy()
+      case "medium" => new MediumPasswordPolicy()
+      case "best" => new HardPasswordPolicy()
     }
   }
 
-  private class bestPasswordPolicy() extends PasswordPolicy {
+  private class HardPasswordPolicy() extends PasswordPolicy {
     val policyType = "best"
 
-    override def isValid(password: String): Boolean = {
-      if (password.length > 8) return true;
-      false
-    }
-
-    override def getPolicyType(): String = policyType
+    override def isValid(password: String): Boolean = password.length > 8
   }
 
-  private class mediumPasswordPolicy() extends PasswordPolicy {
+  private class MediumPasswordPolicy() extends PasswordPolicy {
     val policyType = "medium"
 
-    override def isValid(password: String): Boolean = {
-      if (password.length > 6) return true;
-      false
-    }
-
-    override def getPolicyType(): String = policyType
+    override def isValid(password: String): Boolean = password.length > 6
   }
 
-  private class weakPasswordPolicy() extends PasswordPolicy {
+  private class WeakPasswordPolicy() extends PasswordPolicy {
     val policyType = "weak"
 
-    override def isValid(password: String): Boolean = {
-      if (password.length > 0) return true;
-      false
-    }
-
-    override def getPolicyType(): String = policyType
+    override def isValid(password: String): Boolean = password.length > 0
   }
 
 }

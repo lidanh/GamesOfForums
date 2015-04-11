@@ -16,17 +16,15 @@ class CommentPublicationTests extends Specification {
 
   "Comment publication" should {
     "Success for valid input" in new Ctx {
-      var commentContent = "someContentForComment"
+      val commentContent = "someContentForComment"
 
       post.newCommentOnPost(commentContent) must be_==(Return(commentContent))
     }
 
     "Failure for invalid input" in new Ctx {
-      var commentContent = ""
+      val commentContent = ""
 
       post.newCommentOnPost(commentContent) must be_==(Throw(CommentException("Invalid comment.")))
     }
   }
-
-
 }
