@@ -1,57 +1,47 @@
 package com.gamesofforums.domain
 
-import com.gamesofforums.domain.policies.PasswordPolicy
+import com.gamesofforums.domain.PasswordPolicy.{HardPasswordPolicy, MediumPasswordPolicy, WeakPasswordPolicy}
+import com.wix.accord.specs2.ResultMatchers
 import org.specs2.mutable.Specification
-import org.specs2.specification.Scope
 
 /**
  * Created by Guy Gonen on 06/04/2015.
  */
-class PasswordPolicyTests extends Specification {
+class PasswordPolicyTests extends Specification with ResultMatchers {
 
+  "Weak password policy" should {
+    val weakPolicy = WeakPasswordPolicy
 
-  trait weakPasswordTests extends Scope {
-    val passPolicy = PasswordPolicy.getPasswordPolicy("weak")
-  }
-
-  trait mediumPasswordTests extends Scope {
-    val passPolicy = PasswordPolicy.getPasswordPolicy("medium")
-  }
-
-  trait bestPasswordTests extends Scope {
-    val passPolicy = PasswordPolicy.getPasswordPolicy("best")
-  }
-
-  "PasswordPolicy" should {
-    "Success for weak password policy" in new weakPasswordTests {
-      val weakPassword = "123"
-      passPolicy.isValid(weakPassword) must beTrue
+    "return success upon a valid weak password" in {
+      weakPolicy.validate("123") should succeed
     }
 
-    "Failure for no password in weak policy" in new weakPasswordTests {
-      val nullPassword = ""
-      passPolicy.isValid(nullPassword) must beFalse
-    }
-
-    "Success for medium password policy" in new mediumPasswordTests {
-      val mediumPassword = "1234567"
-      passPolicy.isValid(mediumPassword) must beTrue
-    }
-
-    "Failure for weak password in medium policy" in new mediumPasswordTests {
-      val weakPassword = "123"
-      passPolicy.isValid(weakPassword) must beFalse
-    }
-
-    "Success for best password policy" in new bestPasswordTests {
-      val bestPassword = "1234567987654321"
-      passPolicy.isValid(bestPassword) must beTrue
-    }
-
-    "Failure for medium password in best policy" in new bestPasswordTests {
-      val mediumPassword = "1234567"
-      passPolicy.isValid(mediumPassword) must beFalse
+    "return failure upon an invalid weak password" in {
+      weakPolicy.validate("") should failWith("password" -> "must not be empty")
     }
   }
 
+  "Medium password policy" should {
+    val mediumPolicy = MediumPasswordPolicy
+
+    "return success upon a valid medium password" in {
+      mediumPolicy.validate("123456") should succeed
+    }
+
+    "return failure upon an invalid medium password" in {
+      mediumPolicy.validate("") should failWith("password" -> "has size 0, expected 6 or more")
+    }
+  }
+
+  "Hard password policy" should {
+    val hardPolicy = HardPasswordPolicy
+
+    "return success upon a valid hard password" in {
+      hardPolicy.validate("12345678") should succeed
+    }
+
+    "return failure upon an invalid hard password" in {
+      hardPolicy.validate("") should failWith("password" -> "has size 0, expected 8 or more")
+    }
+  }
 }
