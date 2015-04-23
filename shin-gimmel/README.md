@@ -16,9 +16,9 @@ object Create extends Permission
 Access rules set: 
 ```scala
 val acl = rules {
-    can(Edit)               // Edit every kind of resource
+    can(Edit)               // Edit any kind of resource
     can(Delete).a[Post]     // Delete Posts only
-    can(Create) onlyWhen { p: Post => p.title == "hello shin gimmel!" }
+    can(Create) onlyWhen { p: Post => p.title == "hello shin gimmel!" } // Create only if the predicate is satisfied
 }
 ```
 
