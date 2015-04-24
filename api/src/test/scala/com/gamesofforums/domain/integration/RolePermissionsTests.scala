@@ -9,9 +9,9 @@ import org.specs2.mutable.Specification
  */
 class RolePermissionsTests extends Specification with RolesSharedTests with ForumMatchers {
 
-  val aNormalUser = NormalUser()
-  val aModerator = Moderator()
-  val aForumAdmin = ForumAdmin()
+  val aNormalUser = NormalUser
+  val aModerator = Moderator
+  val aForumAdmin = ForumAdmin
 
   "a normal user" >> {
     behaveLike(aNormalUser)
@@ -49,12 +49,10 @@ class RolePermissionsTests extends Specification with RolesSharedTests with Foru
   }
 
   "god" >> {
-    val god = God()
-
-    behaveLike(god)
+    behaveLike(God)
 
     "can do everything" in {
-      god must havePermissionOnlyTo(
+      God must havePermissionOnlyTo(
         Publish,
         EditMessages,
         DeleteMessages,

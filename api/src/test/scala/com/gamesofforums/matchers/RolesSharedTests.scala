@@ -25,10 +25,10 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
 
   def behaveLike(role: Role) = {
     role match {
-      case r: NormalUser => normalUserBehaviour(r)
-      case r: Moderator => moderatorBehaviour(r)
-      case r: ForumAdmin => forumAdminBehaviour(r)
-      case r: God => forumGodBehaviour(r)
+      case NormalUser => normalUserBehaviour(role)
+      case Moderator => moderatorBehaviour(role)
+      case ForumAdmin => forumAdminBehaviour(role)
+      case God => forumGodBehaviour(role)
     }
   }
 

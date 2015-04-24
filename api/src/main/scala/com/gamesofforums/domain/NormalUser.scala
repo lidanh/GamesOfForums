@@ -1,18 +1,13 @@
 package com.gamesofforums.domain
 
-import com.shingimmel.dsl.AuthorizationRules
-
 /**
  * Created by lidanh on 4/24/15.
  */
-case class NormalUser() extends Role {
-  override implicit val authRules: AuthorizationRules[User] = NormalUser.acl
-}
 
-object NormalUser extends RulesPredicates {
+object NormalUser extends Role with RulesPredicates {
   import com.shingimmel.dsl._
 
-  val acl = rulesFor[User] {
+  override implicit val authRules: AuthorizationRules[User] = rulesFor[User] {
     can(Publish)
     can(EditMessages) onlyWhen heOwnsTheMessage
     can(DeleteMessages) onlyWhen heOwnsTheMessage

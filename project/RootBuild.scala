@@ -19,7 +19,7 @@ object RootBuild extends Build {
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"),
     scalacOptions ++= Seq("-feature", "-language:implicitConversions"),
     scalacOptions in Test ++= Seq("-Yrangepos"),
-    testOptions in Test += Tests.Argument("html", "console")
+    testOptions in Test += Tests.Argument("console")
   )
 
   lazy val shingimmel = (project in file("shin-gimmel")).

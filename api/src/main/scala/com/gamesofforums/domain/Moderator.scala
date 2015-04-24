@@ -5,13 +5,9 @@ import com.shingimmel.dsl._
 /**
  * Created by lidanh on 4/24/15.
  */
-case class Moderator() extends Role with RulesPredicates {
-  override implicit val authRules: AuthorizationRules[User] = Moderator.acl
-}
-
-object Moderator {
-  val acl = rulesFor[User] {
-    derivedFrom(NormalUser.acl)
+object Moderator extends Role {
+  override implicit val authRules: AuthorizationRules[User] = rulesFor[User] {
+    derivedFrom(NormalUser.authRules)
 
     can(Ban).a[User]
 

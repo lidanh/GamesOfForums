@@ -34,7 +34,7 @@ class ForumService(forum: Forum, passwordHasher: PasswordHasher = SHA1Hash) {
   def login(mail: String, password: String): Try[User] = {
     Try {
       forum.users.find(_.mail == mail) match {
-        case Some(user @ User(_, _, _, pass)) if pass == passwordHasher.hash(password) => user
+        case Some(user @ User(_, _, _, pass, _)) if pass == passwordHasher.hash(password) => user
         case Some(_) => throw LoginException("Incorrect password")
         case None => throw LoginException("User is not registered")
       }

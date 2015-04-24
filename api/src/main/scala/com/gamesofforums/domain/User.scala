@@ -9,7 +9,7 @@ import scala.util.matching.Regex
 /**
  * Created by lidanh on 4/5/15.
  */
-case class User(firstName: String, lastName: String, mail: String, password: String) extends ValidationSupport {
+case class User(firstName: String, lastName: String, mail: String, password: String, role: Role = NormalUser) extends ValidationSupport {
   val messages = ListBuffer[Message]()
   override implicit val validator: Validator[User] = User.validator
 
