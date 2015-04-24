@@ -25,7 +25,11 @@ class RolePermissionsTests extends Specification with RolesSharedTests with Foru
     behaveLike(aModerator)
 
     "have publish, edit, delete and ban users but nothing else" in {
-      aModerator must havePermissionOnlyTo(Publish, EditMessages, DeleteMessages, Ban)
+      aModerator must havePermissionOnlyTo(
+        Publish,
+        EditMessages,
+        DeleteMessages,
+        Ban)
     }
   }
 
@@ -33,7 +37,14 @@ class RolePermissionsTests extends Specification with RolesSharedTests with Foru
     behaveLike(aForumAdmin)
 
     "have publish, edit, delete, ban users, manage subforums moderators, manage forum admins, but nothing else" in {
-      aForumAdmin must havePermissionOnlyTo(Publish, EditMessages, DeleteMessages, Ban, ManageSubForumModerators, ManageForumAdmins, ManageSubForums)
+      aForumAdmin must havePermissionOnlyTo(
+        Publish,
+        EditMessages,
+        DeleteMessages,
+        Ban,
+        ManageSubForumModerators,
+        ManageForumAdmins,
+        ManageSubForums)
     }
   }
 
@@ -43,7 +54,15 @@ class RolePermissionsTests extends Specification with RolesSharedTests with Foru
     behaveLike(god)
 
     "can do everything" in {
-      god must havePermissionOnlyTo(Publish, EditMessages, DeleteMessages, Ban, ManageSubForumModerators, ManageForumAdmins, ManageSubForums, ManageForumPolicy)
+      god must havePermissionOnlyTo(
+        Publish,
+        EditMessages,
+        DeleteMessages,
+        Ban,
+        ManageSubForumModerators,
+        ManageForumAdmins,
+        ManageSubForums,
+        ManageForumPolicy)
     }
   }
 }

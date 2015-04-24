@@ -1,9 +1,12 @@
+import sbt.Tests.Argument
 import sbt._
 import sbt.Keys._
 
 object RootBuild extends Build {
   lazy val testsSettings = Seq(
-    libraryDependencies += "org.specs2" %% "specs2-core" % "3.3.1" % Test
+    libraryDependencies ++= Seq(
+      "org.specs2" %% "specs2-core" % "3.3.1" % Test,
+      "org.specs2" %% "specs2-html" % "3.3.1" % Test)
   )
 
   lazy val commonSettings = Seq(
@@ -15,7 +18,8 @@ object RootBuild extends Build {
       "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases",
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"),
     scalacOptions ++= Seq("-feature", "-language:implicitConversions"),
-    scalacOptions in Test ++= Seq("-Yrangepos")
+    scalacOptions in Test ++= Seq("-Yrangepos"),
+    testOptions in Test += Tests.Argument("html", "console")
   )
 
   lazy val shingimmel = (project in file("shin-gimmel")).

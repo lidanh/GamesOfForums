@@ -20,18 +20,21 @@ class SubForumTests extends Specification with ResultMatchers {
     }
 
     "be invalid without name" in {
-      validSubforum.copy(name = "").validate(defaultPolicy) should failWith("name" -> "must not be empty")
+      validSubforum.copy(name = "").validate(defaultPolicy) should
+        failWith("name" -> "must not be empty")
     }
 
     "be invalid without moderators" in {
-      validSubforum.copy(moderators = Seq.empty).validate(defaultPolicy) should failWith("moderators count" -> s"got 0, expected between $minModerators and $maxModerators")
+      validSubforum.copy(moderators = Seq.empty).validate(defaultPolicy) should
+        failWith("moderators count" -> s"got 0, expected between $minModerators and $maxModerators")
     }
 
     "be invalid when moderators num doesn't meet the policy" in {
       val somePolicy = ForumPolicy(minModerators = 1, maxModerators = 1)
       val anotherModerator = moderator.copy(firstName = "azzam", lastName = "azzam", mail = "az@zam.com")
 
-      validSubforum.copy(moderators = Seq(moderator, anotherModerator)).validate(somePolicy) should failWith("moderators count" -> "got 2, expected between 1 and 1")
+      validSubforum.copy(moderators = Seq(moderator, anotherModerator)).validate(somePolicy) should
+        failWith("moderators count" -> "got 2, expected between 1 and 1")
     }
   }
 }
