@@ -1,5 +1,7 @@
 package com.gamesofforums
 
+import java.util.UUID
+
 import com.gamesofforums.domain._
 import com.gamesofforums.exceptions.DataValidationImplicits._
 import com.gamesofforums.exceptions.{InvalidDataException, LoginException, RegistrationException}
@@ -11,7 +13,9 @@ import scala.annotation.tailrec
 /**
  * Created by lidanh on 4/5/15.
  */
-class ForumService(forum: Forum, passwordHasher: PasswordHasher = SHA1Hash) {
+class ForumService(forum: Forum,
+                   passwordHasher: PasswordHasher = SHA1Hash,
+                    mailService: MailService = new MailService()) {
   def register(firstName: String, lastName: String, mail: String, password: String): Try[User] = {
     val users = forum.users
 
@@ -19,11 +23,20 @@ class ForumService(forum: Forum, passwordHasher: PasswordHasher = SHA1Hash) {
       // check duplication
       if (users.exists(_.mail == mail)) throw RegistrationException("User already registered")
 
-      val user = User(firstName, lastName, mail, passwordHasher.hash(password))
+      val user = User(
+        firstName,
+        lastName,
+        mail = mail,
+        password = passwordHasher.hash(password),
+        role = NormalUser,
+        isVerified = false)
 
       user.validate and forum.policy.passwordPolicy.validate(password) match {
         case Success => {
           users += user
+          // send verification mail
+          mailService.sendMail("Verifiction", Seq(user.mail), s"Verify your account: ${UUID.randomUUID().toString}")
+
           user
         }
         case Failure(violations) => throw new InvalidDataException(violations)
@@ -34,7 +47,7 @@ class ForumService(forum: Forum, passwordHasher: PasswordHasher = SHA1Hash) {
   def login(mail: String, password: String): Try[User] = {
     Try {
       forum.users.find(_.mail == mail) match {
-        case Some(user @ User(_, _, _, pass, _)) if pass == passwordHasher.hash(password) => user
+        case Some(user @ User(_, _, _, pass, _, _)) if pass == passwordHasher.hash(password) => user
         case Some(_) => throw LoginException("Incorrect password")
         case None => throw LoginException("User is not registered")
       }

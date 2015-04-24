@@ -1,10 +1,11 @@
 package com.gamesofforums.domain.integration
 
-import com.gamesofforums.ForumService
+import com.gamesofforums.{MailService, ForumService}
 import com.gamesofforums.domain.PasswordPolicy.WeakPasswordPolicy
 import com.gamesofforums.domain._
 import com.gamesofforums.exceptions.{LoginException, RegistrationException}
 import com.gamesofforums.matchers.{ForumMatchers, TwitterTryMatchers}
+import org.mockito.Matchers
 import org.specs2.matcher.{AlwaysMatcher, Matcher}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -51,6 +52,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   "User registration" should {
     "success for a valid user and password" in new Ctx {
       val result = forumService.register(firstName, lastName, someEmail, somePass)
+
       result must beSuccessful(userWith(mail = ===(someEmail)))
     }
 
@@ -82,6 +84,15 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         lastName = lastName,
         mail = someEmail,
         password = "") must beDataViolationFailure(withViolation("password" -> "must not be empty"))
+    }
+
+    "sends verification code to user's email upon registration" in {
+      val mockService = mock[MailService]
+      val mockMailForumService = new ForumService(forum = Forum(ForumPolicy()), mailService = mockService)
+
+      val result = mockMailForumService.register(firstName, lastName, someEmail, somePass)
+
+      there was one(mockService).sendMail(anyString, Matchers.eq(Seq(someEmail)), anyString)
     }
   }
 

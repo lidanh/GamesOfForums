@@ -43,6 +43,7 @@ object RootBuild extends Build {
       libraryDependencies ++= Seq(
         "com.twitter" % "util-core_2.10" % "6.23.0",
         "com.wix" %% "accord-core" % "0.5-SNAPSHOT",
+        "com.sendgrid" % "sendgrid-java" % "2.0.0",
 
         // test packages
         "org.specs2" %% "specs2-mock" % "3.3.1" % Test,
