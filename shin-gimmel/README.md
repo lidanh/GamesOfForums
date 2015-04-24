@@ -23,7 +23,7 @@ Access rules set:
 val acl = rulesFor[User] {
     can(Edit)               // Edit any kind of resource
     can(Delete).a[Post]     // Delete Posts only
-    can(Create) onlyWhen { p: Post => p.title == "hello shin gimmel!" } // Create only if the predicate is satisfied
+    can(Create) onlyWhen { (u: User, p: Post) => u.posts.contains(p) } // Create only if the predicate is satisfied
 }
 ```
 
