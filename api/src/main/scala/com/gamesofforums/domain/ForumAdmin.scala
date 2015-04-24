@@ -12,5 +12,9 @@ case class ForumAdmin() extends Role {
 object ForumAdmin {
   val acl = rulesFor[User] {
     derivedFrom(Moderator.acl)
+
+    can(ManageSubForumModerators)
+    can(ManageForumAdmins)
+    can(ManageSubForums)
   }
 }

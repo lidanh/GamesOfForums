@@ -27,6 +27,7 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
     role match {
       case r: NormalUser => normalUserBehaviour(r)
       case r: Moderator => moderatorBehaviour(r)
+      case r: ForumAdmin => forumAdminBehaviour(r)
     }
   }
 
@@ -94,6 +95,28 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
     "can delete any comment forums that he moderates" in new ModeratorCtx {
       role must havePermissionTo(DeleteMessages)(commentInModeratedSubforum) and
         not(havePermissionTo(DeleteMessages)(otherComment))
+    }
+  }
+
+  private def forumAdminBehaviour(role: Role) = {
+    trait ForumAdminCtx extends Ctx {
+      val forum = Forum(ForumPolicy())
+    }
+
+    "behave like a moderator" in {
+      moderatorBehaviour(role)
+    }
+
+    "can manage subforums moderators" in new ForumAdminCtx {
+      role must havePermissionTo(ManageSubForumModerators)(forum)
+    }
+
+    "can manage forum admins" in new ForumAdminCtx {
+      role must havePermissionTo(ManageForumAdmins)(forum)
+    }
+
+    "can manage subforums" in new ForumAdminCtx {
+      role must havePermissionTo(ManageSubForums)(forum)
     }
   }
 }

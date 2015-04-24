@@ -12,6 +12,7 @@ class RolePermissionsTests extends Specification with ForumMatchers with RolesSh
 
   val aNormalUser = NormalUser()
   val aModerator = Moderator()
+  val aForumAdmin = ForumAdmin()
 
   "a normal user" >> {
     behaveLike(aNormalUser)
@@ -26,6 +27,14 @@ class RolePermissionsTests extends Specification with ForumMatchers with RolesSh
 
     "have publish, edit, delete and ban users but nothing else" in {
       aModerator must havePermissionOnlyTo(Publish, EditMessages, DeleteMessages, Ban)
+    }
+  }
+
+  "a forum admin" >> {
+    behaveLike(aForumAdmin)
+
+    "have publish, edit, delete, ban users, manage subforums moderators, manage forum admins, but nothing else" in {
+      aForumAdmin must havePermissionOnlyTo(Publish, EditMessages, DeleteMessages, Ban, ManageSubForumModerators, ManageForumAdmins, ManageSubForums)
     }
   }
 }

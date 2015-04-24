@@ -2,10 +2,6 @@ package com.gamesofforums.domain
 
 import com.shingimmel.dsl.Permission
 
-/**
- * Created by lidanh on 4/19/15.
- */
-
 /* Normal User Permissions */
 object Publish extends Permission
 
