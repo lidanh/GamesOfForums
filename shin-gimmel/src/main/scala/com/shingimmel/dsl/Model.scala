@@ -1,4 +1,4 @@
-package com.shingimmel
+package com.shingimmel.dsl
 
 import scala.language.experimental.macros
 

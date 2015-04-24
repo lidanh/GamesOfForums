@@ -1,6 +1,6 @@
 package com.gamesofforums.domain
 
-import com.shingimmel.Permission
+import com.shingimmel.dsl.Permission
 
 /**
  * Created by lidanh on 4/19/15.
@@ -13,7 +13,7 @@ object EditMessages extends Permission
 object DeleteMessages extends Permission
 
 /* Moderator Permissions */
-object BanUsers extends Permission
+object Ban extends Permission
 
 /* Administrator Permissions */
 object ManageSubForumModerators extends Permission

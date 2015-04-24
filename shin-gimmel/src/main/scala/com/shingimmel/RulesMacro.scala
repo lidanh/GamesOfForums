@@ -1,5 +1,7 @@
 package com.shingimmel
 
+import com.shingimmel.dsl.AuthorizationRules
+
 import scala.language.experimental.macros
 
 import scala.reflect.macros.blackbox.Context

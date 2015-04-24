@@ -8,7 +8,8 @@ import org.specs2.mutable.Specification
  */
 class PostTests extends Specification with ResultMatchers {
   val fakeUser = User("bibi", "buzi", "some@mail.com", "1234")
-  val validPost = Post("some subject", "some content", fakeUser)
+  val subforum = SubForum("some forum", Seq(fakeUser))
+  val validPost = Post("some subject", "some content", fakeUser, subforum)
 
   "Post" should {
     "be valid with subject and content" in {
@@ -21,6 +22,12 @@ class PostTests extends Specification with ResultMatchers {
 
     "be invalid without content" in {
       validPost.copy(content = "").validate should failWith("content" -> "must not be empty")
+    }
+  }
+
+  "Post.root" should {
+    "return the post itself" in {
+      validPost.rootPost must be_==(validPost)
     }
   }
 }

@@ -1,7 +1,6 @@
 package com.shingimmel
 
-import javax.management.relation.Role
-
+import com.shingimmel.dsl.{AuthorizationRules, Permission}
 import org.specs2.matcher.{Matcher, Matchers}
 
 /**

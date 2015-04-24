@@ -132,7 +132,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   class PublishCtx extends Ctx {
     val fakeUser = User("bla", "bla", "e@mail.com", "somepass")
     val fakeSubforum = SubForum("some name", Seq(fakeUser))
-    val fakePost = Post("kaka", "kaka", fakeUser)
+    val fakePost = Post("kaka", "kaka", fakeUser, fakeSubforum)
   }
 
   "Publish post" should {
@@ -175,7 +175,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       commentPublisher.messages returns ListBuffer[Message]()
 
       // add subscriber to post
-      val somePost = Post("bibi", "zibi", commentPublisher)
+      val somePost = Post("bibi", "zibi", commentPublisher, fakeSubforum)
       val otherSubscriber = mock[User]
       somePost.subscribers += otherSubscriber
 

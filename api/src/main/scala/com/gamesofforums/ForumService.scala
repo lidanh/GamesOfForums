@@ -58,7 +58,7 @@ class ForumService(forum: Forum, passwordHasher: PasswordHasher = SHA1Hash) {
 
   def publishPost(subForum: SubForum, subject: String, content: String, postedBy: User): Try[Post] = {
     Try {
-      val post = Post(subject, content, postedBy)
+      val post = Post(subject, content, postedBy, subForum)
 
       post.validate match {
         case Success => {
@@ -72,13 +72,7 @@ class ForumService(forum: Forum, passwordHasher: PasswordHasher = SHA1Hash) {
     }
   }
 
-  @tailrec
-  private def getRoot(message: Message): Post = {
-    message match {
-      case p: Post => p
-      case c: Comment => getRoot(c.parent)
-    }
-  }
+
 
   def publishComment(parent: Message, content: String, postedBy: User): Try[Comment] = {
     Try {
@@ -87,7 +81,7 @@ class ForumService(forum: Forum, passwordHasher: PasswordHasher = SHA1Hash) {
       comment.validate match {
         case Success => {
           parent.comments += comment
-          val rootPost = getRoot(comment)
+          val rootPost = comment.rootPost
           // subscribe user
           rootPost.subscribers += postedBy
           // notify post subscribers

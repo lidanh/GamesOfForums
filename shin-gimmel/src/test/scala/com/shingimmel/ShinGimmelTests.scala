@@ -6,7 +6,7 @@ import com.shingimmel.dsl._
 /**
  * Created by lidanh on 4/24/15.
  */
-class AuthorizationRulesTests extends Specification with ShinGimmelMatchers {
+class ShinGimmelTests extends Specification with ShinGimmelMatchers {
 
   /* Permissions */
   object Create extends Permission
@@ -55,12 +55,13 @@ class AuthorizationRulesTests extends Specification with ShinGimmelMatchers {
   }
 
   "restrict access based on a predicate" should {
+    val postContent = "hakshev!"
     val rut = rulesFor[User] {
-      can(Delete) onlyWhen { (u: User, post: Post) => post.content == "hakshev" }
+      can(Delete) onlyWhen { (u: User, post: Post) => post.content == postContent }
     }
 
     "allows access to a resource that satisfies the predicate" in {
-      rut.isDefinedAt(Delete, Post("hakshev")) must beTrue
+      rut.isDefinedAt(Delete, Post(postContent)) must beTrue
     }
 
     "block access if predicate was not satisfied" in {

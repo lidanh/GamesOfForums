@@ -2,7 +2,8 @@ package com.gamesofforums.matchers
 
 import com.gamesofforums.domain.{User, Role}
 import com.gamesofforums.exceptions.{InvalidDataException, DataViolation}
-import com.shingimmel.{ShinGimmelMatchers, Permission}
+import com.shingimmel.ShinGimmelMatchers
+import com.shingimmel.dsl.Permission
 import com.twitter.util.{Throw, Try}
 import org.specs2.matcher.{MatchResult, Expectable, AlwaysMatcher, Matcher}
 import org.specs2.matcher._

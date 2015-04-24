@@ -8,8 +8,10 @@ import scala.collection.mutable
 /**
  * Created by Guy Gonen on 08/04/2015.
  */
-case class Post(subject: String, content: String, postedBy: User) extends Message(content, postedBy) {
+case class Post(subject: String, content: String, postedBy: User, postedIn: SubForum) extends Message(content, postedBy) {
   val subscribers = mutable.Set[User]()
+
+  postedIn.posts += this
 
   override implicit val validator: Validator[Post] = Post.validator
 }

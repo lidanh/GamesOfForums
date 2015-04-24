@@ -35,7 +35,7 @@ val creationRules = rulesFor[User] {
 
 val acl = rulesFor[User] {
     // extends creationRules
-    deriveFrom(creationRules)
+    derivedFrom(creationRules)
     
     // add more permissions
     can(Delete).a[Forum]

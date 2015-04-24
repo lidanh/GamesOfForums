@@ -2,6 +2,7 @@ package com.gamesofforums.domain
 
 import java.util.{Calendar, Date}
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -9,4 +10,17 @@ import scala.collection.mutable.ListBuffer
  */
 abstract class Message(content: String, postedBy: User, createdAt: Date = Calendar.getInstance().getTime) extends ValidationSupport {
   val comments = ListBuffer[Comment]()
+
+  lazy val rootPost: Post = {
+
+    @tailrec
+    def rootRec(message: Message): Post = {
+      message match {
+        case p: Post => p
+        case c: Comment => rootRec(c.parent)
+      }
+    }
+
+    rootRec(this)
+  }
 }
