@@ -108,12 +108,13 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
   }
 
   private def forumAdminBehaviour(role: Role) = {
-    "behave like a moderator" in new ForumAdminCtx {
-      /*
-        workaround for authorization rules because moderator has
-        limited permissions than forum admin.
-       */
-      normalUserBehaviour(role)
+    "can publish anything" in new NormalUserCtx {
+      val somePost = Post("some subject", "hakshev!", user, someForum)
+
+      role must havePermissionTo(Publish)(somePost)
+    }
+
+    "can ban users" in new ForumAdminCtx {
       role must havePermissionTo(Ban)(otherUser)
     }
 
