@@ -63,7 +63,7 @@ class ForumService(forum: Forum, passwordHasher: PasswordHasher = SHA1Hash) {
       post.validate match {
         case Success => {
           subForum.posts += post
-          postedBy.posts += post
+          postedBy.messages += post
           post.subscribers += postedBy
           post
         }

@@ -151,7 +151,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     "add the published post to the user's posts" in new PublishCtx {
       val post = forumService.publishPost(fakeSubforum, "bibi", "buzi", fakeUser).get()
 
-      fakeUser.posts must contain(post)
+      fakeUser.messages must contain(post)
     }
 
     "failed for an invalid post (no subject)" in new PublishCtx {
@@ -172,7 +172,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
     "notify post subscribers except the comment publisher" in new PublishCtx {
       val commentPublisher = mock[User]
-      commentPublisher.posts returns ListBuffer[Post]()
+      commentPublisher.messages returns ListBuffer[Message]()
 
       // add subscriber to post
       val somePost = Post("bibi", "zibi", commentPublisher)

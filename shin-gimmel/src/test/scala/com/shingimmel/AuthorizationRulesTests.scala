@@ -18,7 +18,7 @@ class AuthorizationRulesTests extends Specification with ShinGimmelMatchers {
   case class Forum(name: String)
   case class User(name: String)
 
-  implicit val fakeUser = User("shingimmel")
+  implicit val user = User("shingimmel")
   val fakeForum = Forum("matkal")
   val fakePost = Post("hakshev!")
 

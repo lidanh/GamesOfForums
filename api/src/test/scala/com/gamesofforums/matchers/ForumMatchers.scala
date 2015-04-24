@@ -1,6 +1,6 @@
 package com.gamesofforums.matchers
 
-import com.gamesofforums.domain.Role
+import com.gamesofforums.domain.{User, Role}
 import com.gamesofforums.exceptions.{InvalidDataException, DataViolation}
 import com.shingimmel.{ShinGimmelMatchers, Permission}
 import com.twitter.util.{Throw, Try}
@@ -34,7 +34,11 @@ trait ForumMatchers extends TwitterTryMatchers with ShinGimmelMatchers { this: M
     }
   }
 
-  def havePermissionTo(permissions: Permission*): Matcher[Role] = {
-    onlyHavePermissionsTo(permissions: _*) ^^ { r: Role => r.authRules }
+  def havePermissionOnlyTo(permissions: Permission*): Matcher[Role] = {
+    onlyHavePermissionsTo(permissions: _*) ^^ { (_: Role).authRules aka "user authorization rules" }
+  }
+
+  def havePermissionTo(permission: Permission)(resource: Any)(implicit user: User): Matcher[Role] = {
+    havePermissionTo[User](permission)(resource)(user) ^^ { (_: Role).authRules aka "user authorization rules" }
   }
 }
