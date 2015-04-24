@@ -13,6 +13,9 @@ object ForumAdmin {
   val acl = rulesFor[User] {
     derivedFrom(Moderator.acl)
 
+    can(EditMessages)
+    can(DeleteMessages)
+
     can(ManageSubForumModerators)
     can(ManageForumAdmins)
     can(ManageSubForums)

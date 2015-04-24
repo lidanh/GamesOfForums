@@ -32,16 +32,16 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
     }
   }
 
+  trait NormalUserCtx extends Ctx {
+    val someForum = SubForum("test", Seq.empty)
+    val userPost = Post("some subject", "hakshev!", user, someForum)
+    user.messages += userPost
+
+    val otherUserPost = Post("other subject", "hofshi!", otherUser, someForum)
+    otherUser.messages += otherUserPost
+  }
+
   private def normalUserBehaviour(role: Role) = {
-    trait NormalUserCtx extends Ctx {
-      val someForum = SubForum("test", Seq.empty)
-      val userPost = Post("some subject", "hakshev!", user, someForum)
-      user.messages += userPost
-
-      val otherUserPost = Post("other subject", "hofshi!", otherUser, someForum)
-      otherUser.messages += otherUserPost
-    }
-
     "can publish anything" in new NormalUserCtx {
       val somePost = Post("some subject", "hakshev!", user, someForum)
 
@@ -59,17 +59,17 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
     }
   }
 
+  trait ModeratorCtx extends Ctx {
+    val moderatedSubforum = SubForum("test forum", Seq(user))
+    val postInModeratedSubforum = Post("hello", "test message", otherUser, moderatedSubforum)
+    val commentInModeratedSubforum = Comment("some comment", postInModeratedSubforum, otherUser)
+
+    val notModeratedSubforum = SubForum("other forum", Seq.empty)
+    val otherPost = Post("hello", "test message", otherUser, notModeratedSubforum)
+    val otherComment = Comment("some comment", otherPost, otherUser)
+  }
+
   private def moderatorBehaviour(role: Role) = {
-    trait ModeratorCtx extends Ctx {
-      val moderatedSubforum = SubForum("test forum", Seq(user))
-      val postInModeratedSubforum = Post("hello", "test message", otherUser, moderatedSubforum)
-      val commentInModeratedSubforum = Comment("some comment", postInModeratedSubforum, otherUser)
-
-      val notModeratedSubforum = SubForum("other forum", Seq.empty)
-      val otherPost = Post("hello", "test message", otherUser, notModeratedSubforum)
-      val otherComment = Comment("some comment", otherPost, otherUser)
-    }
-
     "behave like a normal user" in {
       normalUserBehaviour(role)
     }
@@ -99,13 +99,38 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
     }
   }
 
+  trait ForumAdminCtx extends Ctx {
+    val someSubforum = SubForum("test forum", Seq.empty)
+    val somePostInSubforum = Post("hello", "test message", otherUser, someSubforum)
+    val commentUnderPost = Comment("some comment", somePostInSubforum, otherUser)
+
+    val forum = Forum(ForumPolicy())
+  }
+
   private def forumAdminBehaviour(role: Role) = {
-    trait ForumAdminCtx extends Ctx {
-      val forum = Forum(ForumPolicy())
+    "behave like a moderator" in new ForumAdminCtx {
+      /*
+        workaround for authorization rules because moderator has
+        limited permissions than forum admin.
+       */
+      normalUserBehaviour(role)
+      role must havePermissionTo(Ban)(otherUser)
     }
 
-    "behave like a moderator" in {
-      moderatorBehaviour(role)
+    "can edit any post in any forum" in new ForumAdminCtx {
+      role must havePermissionTo(EditMessages)(somePostInSubforum)
+    }
+
+    "can edit any comment in any forum" in new ForumAdminCtx {
+      role must havePermissionTo(EditMessages)(commentUnderPost)
+    }
+
+    "can delete any post in any forum" in new ForumAdminCtx {
+      role must havePermissionTo(DeleteMessages)(somePostInSubforum)
+    }
+
+    "can delete any comment forums that he moderates" in new ForumAdminCtx {
+      role must havePermissionTo(DeleteMessages)(commentUnderPost)
     }
 
     "can manage subforums moderators" in new ForumAdminCtx {
