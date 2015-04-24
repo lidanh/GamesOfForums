@@ -33,7 +33,7 @@ package object dsl {
    *                           @usecase can(PERMISSION).a[RESOURCE] defines access to a specific type of resources
    *                                    @example can(Edit).a[Post]
    *                           @usecase can(PERMISSION) onlyWhen [T => Boolean] defines access to a resource based on a predicate function.
-   *                                    @example can(Edit) onlyWhen { post: Post => post.content == "hello shingimel" }
+   *                                    @example can(Edit) onlyWhen { (user: User, post: Post) => user.posts.contains(post) }
    * @tparam U permissions scope object type (e.g. User)
    * @return
    */
