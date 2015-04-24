@@ -28,6 +28,7 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
       case r: NormalUser => normalUserBehaviour(r)
       case r: Moderator => moderatorBehaviour(r)
       case r: ForumAdmin => forumAdminBehaviour(r)
+      case r: God => forumGodBehaviour(r)
     }
   }
 
@@ -117,6 +118,20 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
 
     "can manage subforums" in new ForumAdminCtx {
       role must havePermissionTo(ManageSubForums)(forum)
+    }
+  }
+
+  private def forumGodBehaviour(role: Role) = {
+    trait GodCtx extends Ctx {
+      val forum = Forum(ForumPolicy())
+    }
+
+    "behave like a forum admin" in {
+      forumAdminBehaviour(role)
+    }
+
+    "can manage forum policy" in new GodCtx {
+      role must havePermissionTo(ManageForumPolicy)(forum)
     }
   }
 }

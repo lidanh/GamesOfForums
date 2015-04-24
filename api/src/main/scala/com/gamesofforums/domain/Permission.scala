@@ -16,5 +16,5 @@ object ManageSubForumModerators extends Permission
 object ManageForumAdmins extends Permission
 object ManageSubForums extends Permission
 
-/* Admin */
+/* God Permissions */
 object ManageForumPolicy extends Permission
