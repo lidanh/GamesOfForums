@@ -12,7 +12,7 @@ trait Role {
 }
 
 case class NormalUser() extends Role {
-  override implicit val authRules = rules {
+  override implicit val authRules = rulesFor {
     can(Publish)
     can(EditMessages) // when user owns the message
     can(DeleteMessages)

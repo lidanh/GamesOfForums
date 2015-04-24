@@ -1,6 +1,5 @@
 package com.shingimmel
 
-import com.shingimmel.ShinGimmelMatchers
 import org.specs2.mutable.Specification
 import com.shingimmel.dsl._
 
@@ -16,13 +15,15 @@ class AuthorizationRulesTests extends Specification with ShinGimmelMatchers {
 
   /* Fake resources */
   case class Post(content: String)
+  case class Forum(name: String)
   case class User(name: String)
 
-  val fakeUser = User("shingimmel")
+  implicit val fakeUser = User("shingimmel")
+  val fakeForum = Forum("matkal")
   val fakePost = Post("hakshev!")
 
   "basic permission rules" should {
-    val rut = rules {
+    val rut = rulesFor[User] {
       can(Create)
       can(Edit)
     }
@@ -40,7 +41,7 @@ class AuthorizationRulesTests extends Specification with ShinGimmelMatchers {
   }
 
   "restrict access to a specific kind of resource" should {
-    val rut = rules {
+    val rut = rulesFor[User] {
       can(Create).a[Post]
     }
 
@@ -49,30 +50,30 @@ class AuthorizationRulesTests extends Specification with ShinGimmelMatchers {
     }
 
     "block the given permission on other resources" in {
-      rut.isDefinedAt(Create, fakeUser) must beFalse
+      rut.isDefinedAt(Create, fakeForum) must beFalse
     }
   }
 
   "restrict access based on a predicate" should {
-    val rut = rules {
-      can(Delete) onlyWhen { u: User => u.name == "shingimmel" }
+    val rut = rulesFor[User] {
+      can(Delete) onlyWhen { (u: User, post: Post) => post.content == "hakshev" }
     }
 
-    "allows access to the resource who satisfies the predicate" in {
-      rut.isDefinedAt(Delete, User("shingimmel")) must beTrue
+    "allows access to a resource that satisfies the predicate" in {
+      rut.isDefinedAt(Delete, Post("hakshev")) must beTrue
     }
 
     "block access if predicate was not satisfied" in {
-      rut.isDefinedAt(Delete, User("lidan")) must beFalse
+      rut.isDefinedAt(Delete, Post("Yo")) must beFalse
     }
   }
 
   "rules derivation from single parent" should {
-    val parent = rules {
+    val parent = rulesFor[User] {
       can(Create)
     }
 
-    val rut = rules {
+    val rut = rulesFor[User] {
       derivedFrom(parent)
       can(Delete)
     }
@@ -83,15 +84,15 @@ class AuthorizationRulesTests extends Specification with ShinGimmelMatchers {
 
     "allows access to any kind of resource based on child's & parent's permissions" in {
       rut.isDefinedAt(Create, fakePost) must beTrue
-      rut.isDefinedAt(Delete, fakeUser) must beTrue
+      rut.isDefinedAt(Delete, fakeForum) must beTrue
     }
   }
 
   "rules derivation from multiple parents" should {
-    val creation = rules { can(Create) }
-    val deletion = rules { can(Delete) }
+    val creation = rulesFor[User] { can(Create) }
+    val deletion = rulesFor[User] { can(Delete) }
 
-    val rut = rules {
+    val rut = rulesFor[User] {
       derivedFrom(creation)
       derivedFrom(deletion)
 
@@ -104,52 +105,54 @@ class AuthorizationRulesTests extends Specification with ShinGimmelMatchers {
   }
 
   "rules overridden of same kind" should {
-    val parent = rules {
-      can(Create) onlyWhen { u: User => u.name == "lidan" }
+    val somePostContent = "Hakshev!"
+
+    val parent = rulesFor[User] {
+      can(Create) onlyWhen { (u: User, post: Post) => post.content == somePostContent }
     }
 
-    val rut = rules {
+    val rut = rulesFor[User] {
       derivedFrom(parent)
-      can(Create) onlyWhen { u: User => u.name == "shingimmel" }
+      can(Create) onlyWhen { (u: User, post: Post) => post.content == "Amod dom!" }
     }
 
     "give precedence to child's permissions" in {
-      val user = User("lidan")
-      parent.isDefinedAt(Create, user) must beTrue
-      rut.isDefinedAt(Create, user) must beFalse
+      val post = Post(somePostContent)
+      parent.isDefinedAt(Create, post) must beTrue
+      rut.isDefinedAt(Create, post)  must beFalse
     }
   }
 
   "reduce permissions by rules overridden of different kind" should {
-    val parent = rules {
+    val parent = rulesFor[User] {
       can(Create)
     }
 
-    val rut = rules {
+    val rut = rulesFor[User] {
       derivedFrom(parent)
       can(Create).a[Post]
     }
 
     // Todo: Fix, it's not an expected behaviour!
     "combines parent's & child permissions" in {
-      parent.isDefinedAt(Create, fakeUser) must beTrue
-      rut.isDefinedAt(Create, fakeUser) must beTrue
+      parent.isDefinedAt(Create, fakePost) must beTrue
+      rut.isDefinedAt(Create, fakePost) must beTrue
     }
   }
 
   "extend permissions by rules overridden of different kinds" should {
-    val parent = rules {
+    val parent = rulesFor[User] {
       can(Create).a[Post]
     }
 
-    val rut = rules {
+    val rut = rulesFor[User] {
       derivedFrom(parent)
       can(Create)
     }
 
     "combines parent's & child permissions" in {
-      parent.isDefinedAt(Create, fakeUser) must beFalse
-      rut.isDefinedAt(Create, fakeUser) must beTrue
+      parent.isDefinedAt(Create, fakeForum) must beFalse
+      rut.isDefinedAt(Create, fakeForum) must beTrue
     }
   }
 }

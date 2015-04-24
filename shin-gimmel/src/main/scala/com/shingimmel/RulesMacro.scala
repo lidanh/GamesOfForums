@@ -14,7 +14,7 @@ import scala.reflect.macros.blackbox.Context
  * @author Lidan Hifi
  * @since 23/04/15
  */
-private class RulesMacro[C <: Context](val context: C, exprs: C#Tree) {
+private class RulesMacro[C <: Context, U : C#WeakTypeTag](val context: C, exprs: C#Tree) {
   import context.universe._
 
   trait Pattern
@@ -36,11 +36,11 @@ private class RulesMacro[C <: Context](val context: C, exprs: C#Tree) {
         Seq(RulePattern(permission, Some(tq"$tpe")))
 
       // can with onlyWhen statement
-      case q"com.shingimmel.dsl.`package`.can($permission).onlyWhen[$tpe]($f)" =>
-        Seq(RulePattern(permission, Some(tq"$tpe"), Some(q"$f")))
+      case q"com.shingimmel.dsl.`package`.can($permission).onlyWhen[$utpe, $rtpe]($f)" =>
+        Seq(RulePattern(permission, Some(tq"$rtpe"), Some(q"$f")))
 
       // derivation statement
-      case q"com.shingimmel.dsl.`package`.derivedFrom(..${parents: List[context.Tree]})" =>
+      case q"com.shingimmel.dsl.`package`.derivedFrom[$tpe](..${parents: List[context.Tree]})" =>
         parents.map { case p: context.Tree => DerivedPattern(q"$p") }
 
       // block of rules
@@ -53,17 +53,17 @@ private class RulesMacro[C <: Context](val context: C, exprs: C#Tree) {
     }
   }
 
-  def transform: context.Expr[AuthorizationRules] = {
+  def transform: context.Expr[AuthorizationRules[U]] = {
     val patterns = extractPatterns(exprs)
 
     val cases = patterns.collect {
       case RulePattern(permission, None, _) => cq"($permission, _) => true"
       case RulePattern(permission, Some(resourceType), None) => cq"($permission, r: $resourceType) => true"
-      case RulePattern(permission, Some(resourceType), Some(f)) => cq"($permission, r: $resourceType) => $f(r)"
+      case RulePattern(permission, Some(resourceType), Some(f)) => cq"($permission, r: $resourceType) => $f(scope, r)"
     }
 
     val derivedCases = patterns.collect {
-      case DerivedPattern(parent) => cq"_ if $parent.isDefinedAt(permission, resource) => true"
+      case DerivedPattern(parent) => cq"_ if $parent.isDefinedAt(permission, resource)(scope) => true"
     }
 
     val permissions = patterns.collect { case r: RulePattern => r.permission }
@@ -72,9 +72,9 @@ private class RulesMacro[C <: Context](val context: C, exprs: C#Tree) {
       case DerivedPattern(parent) => q"$parent.permissions"
     }.fold(q"Set(..$permissions)")( (acc, parent) => q"$acc ++ $parent" )
 
-    context.Expr[AuthorizationRules] {
-      q"""new AuthorizationRules($permissionsSet) {
-          override def isDefinedAt(permission: Permission, resource: Any): Boolean = {
+    context.Expr[AuthorizationRules[U]] {
+      q"""new AuthorizationRules[${weakTypeOf[U]}]($permissionsSet) {
+          override def isDefinedAt(permission: Permission, resource: Any)(implicit scope: ${weakTypeOf[U]}): Boolean = {
             (permission, resource) match {
               case ..$cases
               case ..$derivedCases
@@ -87,5 +87,5 @@ private class RulesMacro[C <: Context](val context: C, exprs: C#Tree) {
 }
 
 object RulesMacro {
-  def apply(c: Context)(authorizationRules: c.Tree): c.Expr[AuthorizationRules] = new RulesMacro[c.type](c, authorizationRules).transform
+  def apply[U : c.WeakTypeTag](c: Context)(authorizationRules: c.Tree): c.Expr[AuthorizationRules[U]] = new RulesMacro[c.type, U](c, authorizationRules).transform
 }
