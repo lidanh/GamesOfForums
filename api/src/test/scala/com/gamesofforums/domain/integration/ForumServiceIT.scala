@@ -25,7 +25,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   val somePass = "somePass"
 
   trait Ctx extends Scope {
-    val mockMailService = mock[MailService]
+    val mockMailService = mock[MailService] // MUST BE MOCKED! otherwise real emails will be sent!
     val forum = Forum(policy = ForumPolicy())
     val forumService = new ForumService(forum = forum, mailService = mockMailService)
   }
@@ -51,6 +51,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   def commentWith(content: String): Matcher[Comment] = ===(content) ^^ { (_: Comment).content aka "comment content" }
 
   def reportWith(content: String): Matcher[Report] = ===(content) ^^ { (_: Report).content aka "report content" }
+
+  "Forum initialization" should {
+    pending("TBI")
+  }
 
   "User registration" should {
     "success for a valid user and password" in new Ctx {
@@ -117,6 +121,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     "failed for unregistered user" in new Ctx {
       forumService.login(someEmail, somePass) must beFailure[User, LoginException]("User is not registered")
     }
+  }
+
+  "User logout" should {
+    pending("because it's an API, so we don't have a session for the logged-in user. will be added with the web layer")
   }
 
   "Create subforum" should {
@@ -294,6 +302,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   }
 
   "message deletion" should {
-    success
+    pending("because we don't have persistentcy layer.")
+  }
+
+  "user types" should {
+    pending("because the requirements are unclear.")
   }
 }
