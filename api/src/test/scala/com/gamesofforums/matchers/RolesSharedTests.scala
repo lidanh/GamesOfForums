@@ -4,6 +4,8 @@ import com.gamesofforums.domain._
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
+import scala.collection.mutable.ListBuffer
+
 /**
  * Created by lidanh on 4/24/15.
  */
@@ -26,14 +28,14 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
   def behaveLike(role: Role) = {
     role match {
       case NormalUser => normalUserBehaviour(role)
-      case Moderator => moderatorBehaviour(role)
+      case role: Moderator => moderatorBehaviour(role)
       case ForumAdmin => forumAdminBehaviour(role)
       case God => forumGodBehaviour(role)
     }
   }
 
   trait NormalUserCtx extends Ctx {
-    val someForum = SubForum("test", Seq.empty)
+    val someForum = SubForum("test")
     val userPost = Post("some subject", "hakshev!", user, someForum)
     user.messages += userPost
 
@@ -60,17 +62,19 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
   }
 
   trait ModeratorCtx extends Ctx {
-    val moderatedSubforum = SubForum("test forum", Seq(user))
+    val moderatedSubforum = SubForum("test forum")
+    user is Moderator(at = moderatedSubforum)
     val postInModeratedSubforum = Post("hello", "test message", otherUser, moderatedSubforum)
     val commentInModeratedSubforum = Comment("some comment", postInModeratedSubforum, otherUser)
 
-    val notModeratedSubforum = SubForum("other forum", Seq.empty)
+    val notModeratedSubforum = SubForum("other forum")
     val otherPost = Post("hello", "test message", otherUser, notModeratedSubforum)
     val otherComment = Comment("some comment", otherPost, otherUser)
+
   }
 
   private def moderatorBehaviour(role: Role) = {
-    "behave like a normal user" in {
+    "behave like a normal user" in new ModeratorCtx {
       normalUserBehaviour(role)
     }
 
@@ -100,7 +104,7 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
   }
 
   trait ForumAdminCtx extends Ctx {
-    val someSubforum = SubForum("test forum", Seq.empty)
+    val someSubforum = SubForum("test forum")
     val somePostInSubforum = Post("hello", "test message", otherUser, someSubforum)
     val commentUnderPost = Comment("some comment", somePostInSubforum, otherUser)
 

@@ -10,7 +10,7 @@ import org.specs2.mutable.Specification
 class RolePermissionsTests extends Specification with RolesSharedTests with ForumMatchers {
 
   val aNormalUser = NormalUser
-  val aModerator = Moderator
+  val aModerator = Moderator(Seq.empty)
   val aForumAdmin = ForumAdmin
 
   "a normal user" >> {

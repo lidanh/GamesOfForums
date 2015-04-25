@@ -13,7 +13,7 @@ case class User(firstName: String,
                 lastName: String,
                 mail: String,
                 password: String,
-                role: Role = NormalUser,
+                private var _role: Role = NormalUser,
                 verificationCode: Option[String] = None) extends ValidationSupport {
 
   val messages = ListBuffer[Message]()
@@ -23,7 +23,16 @@ case class User(firstName: String,
     // Todo: notify user
   }
 
-  def is(role: Role) = copy(role = role)
+  def role = _role
+
+  def is(newRole: Role) = {
+    if (role.isInstanceOf[Moderator] && newRole.isInstanceOf[Moderator]) {
+      // mix the forums the user moderates
+            _role = Moderator(this.role.asInstanceOf[Moderator].at ++ newRole.asInstanceOf[Moderator].at)
+    } else {
+      _role = newRole
+    }
+  }
 }
 
 object User {

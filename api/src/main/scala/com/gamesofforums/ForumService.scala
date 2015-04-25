@@ -25,7 +25,7 @@ class ForumService(forum: Forum,
         lastName,
         mail = mail,
         password = passwordHasher.hash(password),
-        role = NormalUser,
+        _role = NormalUser,
         verificationCode = Some(UUID.randomUUID().toString))
 
       user.validate and forum.policy.passwordPolicy.validate(password) match {
@@ -53,8 +53,8 @@ class ForumService(forum: Forum,
 
   def createSubforum(name: String, moderators: Seq[String]): Try[SubForum] = {
     Try {
-      val moderatorsAsUsers = forum.users.filter(u => moderators.contains(u.mail))
-      val subForum = SubForum(name, moderatorsAsUsers)
+      val subForum = SubForum(name)
+      forum.users.filter(u => moderators.contains(u.mail)).foreach(u => u is Moderator(subForum))
 
       subForum.validate(forum.policy) match {
         case Success => {
@@ -90,8 +90,9 @@ class ForumService(forum: Forum,
         case Success => {
           parent.comments += comment
           val rootPost = comment.rootPost
+          rootPost.postedIn.messages += comment
           // subscribe user
-          rootPost.subscribers += postedBy
+           rootPost.subscribers += postedBy
           // notify post subscribers
           rootPost.subscribers.foreach(subscriber => if (subscriber != postedBy) subscriber.notify(comment))
 
@@ -106,15 +107,15 @@ class ForumService(forum: Forum,
     Try {
       // validate that the reported user has already posted in the given subforum
       if (!subforum.messages.exists(m => m.postedBy == reportedUser))
-        throw new ReportException("User haven't publish a message the given subforum")
+        throw new ReportException("User hasn't publish a message the given subforum")
 
       // validate that the given moderator is a moderator in the given subforum
-      if (!subforum.moderators.contains(moderator))
+      if (!moderator.role.isInstanceOf[Moderator] || !subforum.moderators.contains(moderator.role))
         throw new ReportException("The given moderator is not a moderator in the given subforum")
 
       val report = Report(
         reportedUser = reportedUser,
-        moderator = moderator,
+        otherUser = moderator,
         content = reportContent)
 
       report.validate match {

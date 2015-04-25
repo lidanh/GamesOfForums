@@ -10,8 +10,6 @@ import scala.annotation.tailrec
  */
 case class Comment(override val content: String, parent: Message, override val postedBy: User) extends Message(content, postedBy) {
   override val validator: Validator[Comment] = Comment.validator
-  parent.comments += this
-  rootPost.postedIn.messages += this
 }
 
 object Comment {

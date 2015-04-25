@@ -10,8 +10,8 @@ import org.specs2.specification.Scope
 class PostTests extends Specification with ResultMatchers {
 
   trait PostCtx extends Scope {
-    val fakeUser = User("bibi", "buzi", "some@mail.com", "1234")
-    val subforum = SubForum("some forum", Seq(fakeUser))
+    val subforum = SubForum("some forum")
+    val fakeUser = User("bibi", "buzi", "some@mail.com", "1234", Moderator(at = subforum))
     val validPost = Post("some subject", "some content", fakeUser, subforum)
   }
 
@@ -53,7 +53,7 @@ class PostTests extends Specification with ResultMatchers {
 
       validPost.removeComments()
 
-      subforum.messages must not(contain(level1, level2))
+      subforum.messages must not(contain(level1.asInstanceOf[Message])) and not(contain(level2.asInstanceOf[Message]))
     }
   }
 }

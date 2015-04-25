@@ -74,7 +74,7 @@ private class RulesMacro[C <: Context, U : C#WeakTypeTag](val context: C, exprs:
       case DerivedPattern(parent) => q"$parent.permissions"
     }.fold(q"Set(..$permissions)")( (acc, parent) => q"$acc ++ $parent" )
 
-    context.Expr[AuthorizationRules[U]] {
+    val result = context.Expr[AuthorizationRules[U]] {
       q"""new AuthorizationRules[${weakTypeOf[U]}]($permissionsSet) {
           override def isDefinedAt(permission: Permission, resource: Any)(implicit scope: ${weakTypeOf[U]}): Boolean = {
             (permission, resource) match {
@@ -85,6 +85,10 @@ private class RulesMacro[C <: Context, U : C#WeakTypeTag](val context: C, exprs:
           }
       }"""
     }
+
+//    context.info(NoPosition, showCode(result.tree), true)
+
+    result
   }
 }
 

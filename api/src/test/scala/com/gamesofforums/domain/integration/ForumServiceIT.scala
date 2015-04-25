@@ -31,19 +31,19 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   }
 
   def userWith(mail: Matcher[String] = AlwaysMatcher(),
-                password: Matcher[String] = AlwaysMatcher()): Matcher[User] = {
+               password: Matcher[String] = AlwaysMatcher()): Matcher[User] = {
     mail ^^ { (_: User).mail } and
-    password ^^ { (_: User).password }
+      password ^^ { (_: User).password }
   }
 
   def postWith(subject: Matcher[String] = AlwaysMatcher(),
-                content: Matcher[String] = AlwaysMatcher(),
-                postedBy: Matcher[User] = AlwaysMatcher(),
-                subscribers: Matcher[mutable.Set[User]] = AlwaysMatcher()) = {
+               content: Matcher[String] = AlwaysMatcher(),
+               postedBy: Matcher[User] = AlwaysMatcher(),
+               subscribers: Matcher[ListBuffer[User]] = AlwaysMatcher()) = {
     subject ^^ { (_: Post).subject } and
-    content ^^ { (_: Post).content } and
-    postedBy ^^ { (_: Post).postedBy } and
-    subscribers ^^ { (_: Post).subscribers }
+      content ^^ { (_: Post).content } and
+      postedBy ^^ { (_: Post).postedBy } and
+      subscribers ^^ { (_: Post).subscribers }
   }
 
   def subForumWith(name: String): Matcher[SubForum] = ===(name) ^^ { (_: SubForum).name aka "sub forum name" }
@@ -83,8 +83,8 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         password = somePass) must beDataViolationFailure(withViolation("mail" -> "must be valid"))
     }
 
-    "failed for an invalid password (doesn't meet the current password policy)" in {
-      val userManagerWithPolicy = new ForumService(forum = Forum(policy = ForumPolicy(WeakPasswordPolicy)))
+    "failed for an invalid password (doesn't meet the current password policy)" in new Ctx {
+      val userManagerWithPolicy = new ForumService(forum = Forum(policy = ForumPolicy(WeakPasswordPolicy)), mailService = mockMailService)
 
       userManagerWithPolicy.register(
         firstName = firstName,
@@ -133,6 +133,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       forumService.register("blabla", "blabla", someEmail, "blabla")
 
       val result = forumService.createSubforum(name = subforumName, moderators = List(someEmail))
+
       result must beSuccessful(subForumWith(name = subforumName))
       forum.subForums must contain(result.get())
     }
@@ -146,7 +147,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
     "failed when the subforum does not meet the forum policy" in new Ctx {
       val someForumWithNoModeratorsPolicy = Forum(policy = ForumPolicy(minModerators = 0, maxModerators = 0))
-      val service = new ForumService(forum = someForumWithNoModeratorsPolicy)
+      val service = new ForumService(forum = someForumWithNoModeratorsPolicy, mailService = mockMailService)
       service.register("blabla", "blabla", someEmail, "blabla")
 
       service.createSubforum("some subforum", List(someEmail)) must beDataViolationFailure(withViolation("moderators count" -> "got 1, expected between 0 and 0"))
@@ -154,8 +155,8 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   }
 
   class PublishCtx extends Ctx {
-    val fakeUser = User("bla", "bla", "e@mail.com", "somepass")
-    val fakeSubforum = SubForum("some name", Seq(fakeUser))
+    val fakeSubforum = SubForum("some name")
+    val fakeUser = User("bla", "bla", "e@mail.com", "somepass", Moderator(at = fakeSubforum))
     val fakePost = Post("kaka", "kaka", fakeUser, fakeSubforum)
   }
 
@@ -166,9 +167,9 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
       val result = forumService.publishPost(fakeSubforum, someSubject, someContent, fakeUser)
       result must beSuccessful(postWith(subject = ===(someSubject),
-                              content = ===(someContent),
-                              postedBy = ===(fakeUser),
-                              subscribers = contain(fakeUser)))
+        content = ===(someContent),
+        postedBy = ===(fakeUser),
+        subscribers = contain(fakeUser)))
       fakeSubforum.messages must contain(result.get())
     }
 
@@ -190,8 +191,11 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
       val result = forumService.publishComment(fakePost, someContent, fakeUser)
       result must beSuccessful(commentWith(someContent))
+
+      // test persistency
       fakePost.comments must contain(result.get())
       fakePost.subscribers must contain(fakeUser)
+      fakeSubforum.messages must contain(result.get())
     }
 
     "notify post subscribers except the comment publisher" in new PublishCtx {
@@ -216,8 +220,8 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
   trait ReportCtx extends Ctx {
     val user = User("some normal user", "blabla", "test@user.com", "1234")
-    val moderator = User("some moderator", "kuki", "mod@erator.com", "0000", Moderator)
-    val subforum = SubForum("some forum", Seq(moderator))
+    val subforum = SubForum("some forum")
+    val moderator = User("some moderator", "kuki", "mod@erator.com", "0000", Moderator(at = subforum))
   }
 
   "report moderator" should {
@@ -256,24 +260,24 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
 
     "failed if the user haven't post any message in the moderator's forum" in new ReportCtx {
-      forumService.report(subforum, user, moderator, "some complaint") must beFailure[Report, ReportException]("User haven't publish a message the given subforum")
+      forumService.report(subforum, user, moderator, "some complaint") must beFailure[Report, ReportException]("User hasn't publish a message the given subforum")
     }
 
     "failed if the user the report about is not a moderator in the given subforum" in new ReportCtx {
-      val subforumNoModerators = subforum.copy(moderators = Seq.empty)
+      subforum._moderators.clear()
 
       forumService.publishPost(
-        subForum = subforumNoModerators,
+        subForum = subforum,
         subject = "test post",
         content = "bla bla",
         postedBy = user
       )
 
-      forumService.report(subforumNoModerators, user, moderator, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
+      forumService.report(subforum, user, moderator, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
     }
 
     "failed if the given `moderator` is not a moderator" in new ReportCtx {
-      val regularUser = moderator.copy(role = NormalUser)
+      val regularUser = moderator.copy(_role = NormalUser)
 
       forumService.publishPost(
         subForum = subforum,
@@ -297,12 +301,12 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
 
     "failed if the subforum doesnt exist" in new Ctx {
-      forumService.deleteSubforum(SubForum("Winterfall", Seq.empty)) must beFailure[Unit, SubForumException]("subforum was not found")
+      forumService.deleteSubforum(SubForum("Winterfall")) must beFailure[Unit, SubForumException]("subforum was not found")
     }
   }
 
   "message deletion" should {
-    pending("because we don't have persistentcy layer.")
+    pending("because we don't have persistence layer.")
   }
 
   "user types" should {

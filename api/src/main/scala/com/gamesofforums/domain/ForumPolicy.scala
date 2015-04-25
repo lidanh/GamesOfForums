@@ -11,6 +11,6 @@ case class ForumPolicy(passwordPolicy: PasswordPolicy = MediumPasswordPolicy,
                        maxModerators: Int = 3) {
 
   def subforumPolicy = validator[SubForum] { subforum =>
-    subforum.moderators.length as "moderators count" is between(minModerators, maxModerators)
+    subforum._moderators.length as "moderators count" is between(minModerators, maxModerators)
   }
 }

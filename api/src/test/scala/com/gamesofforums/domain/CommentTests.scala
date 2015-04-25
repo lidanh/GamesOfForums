@@ -10,7 +10,7 @@ import org.specs2.specification.Scope
 class CommentTests extends Specification with ResultMatchers {
   trait CommentCtx extends Scope {
     val fakeUser = User("fakename", "fakename", "some@mail.com", "pass")
-    val subforum = SubForum("some forum", Seq(fakeUser))
+    val subforum = SubForum("some forum")
     val post = Post("some subject", "some content", fakeUser, subforum)
     val validComment = Comment(
       content = "some content",
@@ -25,15 +25,6 @@ class CommentTests extends Specification with ResultMatchers {
 
     "be invalid without content" in new CommentCtx {
       validComment.copy(content = "").validate should failWith("content" -> "must not be empty")
-    }
-
-    "add itself to the parent's comments" in new CommentCtx {
-      post.comments must contain(validComment)
-    }
-
-    "add itself to the root post subforum's messages" in new CommentCtx {
-      subforum.messages must contain(post.asInstanceOf[Message]) and
-        contain(validComment.asInstanceOf[Message])
     }
   }
 
