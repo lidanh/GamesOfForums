@@ -60,7 +60,8 @@ class RolePermissionsTests extends Specification with RolesSharedTests with Foru
         ManageSubForumModerators,
         ManageForumAdmins,
         ManageSubForums,
-        ManageForumPolicy)
+        ManageForumPolicy,
+        ManageUserTypes)
     }
   }
 }

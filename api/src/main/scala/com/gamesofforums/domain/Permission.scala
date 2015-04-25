@@ -18,3 +18,4 @@ object ManageSubForums extends Permission
 
 /* God Permissions */
 object ManageForumPolicy extends Permission
+object ManageUserTypes extends Permission

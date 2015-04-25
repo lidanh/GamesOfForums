@@ -292,4 +292,8 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       forumService.deleteSubforum(SubForum("Winterfall", Seq.empty)) must beFailure[Unit, SubForumException]("subforum was not found")
     }
   }
+
+  "message deletion" should {
+    success
+  }
 }

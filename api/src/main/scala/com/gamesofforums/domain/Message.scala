@@ -11,8 +11,21 @@ import scala.collection.mutable.ListBuffer
 abstract class Message(val content: String, val postedBy: User, createdAt: Date = Calendar.getInstance().getTime) extends ValidationSupport {
   val comments = ListBuffer[Comment]()
 
-  lazy val rootPost: Post = {
 
+  def removeComments(): Unit = {
+    comments.foreach { comment =>
+      // remove from root subforum
+      rootPost.postedIn.messages -= comment
+
+      // remove sub comments recursively
+      comment.removeComments()
+    }
+
+    // remove message's comments
+    this.comments.clear()
+  }
+
+  lazy val rootPost: Post = {
     @tailrec
     def rootRec(message: Message): Post = {
       message match {

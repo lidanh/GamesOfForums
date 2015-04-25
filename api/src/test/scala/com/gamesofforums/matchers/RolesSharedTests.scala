@@ -159,5 +159,9 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
     "can manage forum policy" in new GodCtx {
       role must havePermissionTo(ManageForumPolicy)(forum)
     }
+
+    "can manage user types" in new GodCtx {
+      role must havePermissionTo(ManageUserTypes)(forum)
+    }
   }
 }

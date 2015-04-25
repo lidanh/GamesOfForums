@@ -10,5 +10,6 @@ object God extends Role {
     derivedFrom(ForumAdmin.authRules)
 
     can(ManageForumPolicy)
+    can(ManageUserTypes)
   }
 }
