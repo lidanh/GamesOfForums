@@ -3,8 +3,8 @@ package com.gamesofforums.domain.integration
 import com.gamesofforums.{MailService, ForumService}
 import com.gamesofforums.domain.PasswordPolicy.WeakPasswordPolicy
 import com.gamesofforums.domain._
-import com.gamesofforums.exceptions.{LoginException, RegistrationException}
-import com.gamesofforums.matchers.{ForumMatchers, TwitterTryMatchers}
+import com.gamesofforums.exceptions.{ReportException, LoginException, RegistrationException}
+import com.gamesofforums.matchers.ForumMatchers
 import org.mockito.Matchers
 import org.specs2.matcher.{AlwaysMatcher, Matcher}
 import org.specs2.mock.Mockito
@@ -49,6 +49,8 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
   def commentWith(content: String): Matcher[Comment] = ===(content) ^^ { (_: Comment).content aka "comment content" }
 
+  def reportWith(content: String): Matcher[Report] = ===(content) ^^ { (_: Report).content aka "report content" }
+
   "User registration" should {
     "success for a valid user and password" in new Ctx {
       val result = forumService.register(firstName, lastName, someEmail, somePass)
@@ -86,13 +88,18 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         password = "") must beDataViolationFailure(withViolation("password" -> "must not be empty"))
     }
 
-    "sends verification code to user's email upon registration" in {
+    "send verification code to user's email upon registration" in {
       val mockService = mock[MailService]
       val mockMailForumService = new ForumService(forum = Forum(ForumPolicy()), mailService = mockService)
 
       val result = mockMailForumService.register(firstName, lastName, someEmail, somePass)
 
-      there was one(mockService).sendMail(anyString, Matchers.eq(Seq(someEmail)), anyString)
+      val verificationCode = result.get().verificationCode.getOrElse("unknown")
+
+      there was one(mockService).sendMail(
+        subject = anyString,
+        recipients = Matchers.eq(Seq(someEmail)),
+        content = contain(verificationCode))
     }
   }
 
@@ -156,7 +163,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
                               content = ===(someContent),
                               postedBy = ===(fakeUser),
                               subscribers = contain(fakeUser)))
-      fakeSubforum.posts must contain(result.get())
+      fakeSubforum.messages must contain(result.get())
     }
 
     "add the published post to the user's posts" in new PublishCtx {
@@ -198,6 +205,78 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
     "failed for an invalid comment" in new PublishCtx {
       forumService.publishComment(fakePost, "", fakeUser) must beDataViolationFailure(withViolation("content" -> "must not be empty"))
+    }
+  }
+
+  trait ReportCtx extends Ctx {
+    val user = User("some normal user", "blabla", "test@user.com", "1234")
+    val moderator = User("some moderator", "kuki", "mod@erator.com", "0000", Moderator)
+    val subforum = SubForum("some forum", Seq(moderator))
+  }
+
+  "report moderator" should {
+    "success if the user was already published a post in the moderator's subforum" in new ReportCtx {
+      forumService.publishPost(
+        subForum = subforum,
+        subject = "test post",
+        content = "bla bla",
+        postedBy = user
+      )
+
+      val someContent = "some complaint"
+      val result = forumService.report(subforum, user, moderator, someContent)
+
+      result must beSuccessful(reportWith(someContent))
+      forum.reports must contain(result.get())
+    }
+
+    "success if the user was already published a comment in the moderator's subforum" in new ReportCtx {
+      val parentpost = forumService.publishPost(
+        subForum = subforum,
+        subject = "test post",
+        content = "bla bla",
+        postedBy = moderator
+      ).get()
+
+      forumService.publishComment(
+        parent = parentpost,
+        content = "some comment",
+        postedBy = user
+      )
+
+      val someContent = "some complaint"
+
+      forumService.report(subforum, user, moderator, someContent) must beSuccessful(reportWith(someContent))
+    }
+
+    "failed if the user haven't post any message in the moderator's forum" in new ReportCtx {
+      forumService.report(subforum, user, moderator, "some complaint") must beFailure[Report, ReportException]("User haven't publish a message the given subforum")
+    }
+
+    "failed if the user the report about is not a moderator in the given subforum" in new ReportCtx {
+      val subforumNoModerators = subforum.copy(moderators = Seq.empty)
+
+      forumService.publishPost(
+        subForum = subforumNoModerators,
+        subject = "test post",
+        content = "bla bla",
+        postedBy = user
+      )
+
+      forumService.report(subforumNoModerators, user, moderator, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
+    }
+
+    "failed if the given `moderator` is not a moderator" in new ReportCtx {
+      val regularUser = moderator.copy(role = NormalUser)
+
+      forumService.publishPost(
+        subForum = subforum,
+        subject = "test post",
+        content = "bla bla",
+        postedBy = user
+      )
+
+      forumService.report(subforum, user, regularUser, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
     }
   }
 }

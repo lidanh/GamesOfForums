@@ -16,6 +16,7 @@ class MailService {
 
     val mail = new Email()
     mail.setFrom("noreply@games-of-forums.com")
+    mail.setFromName("Games of Forums")
     mail.setSubject(subject)
     mail.setText(content)
 

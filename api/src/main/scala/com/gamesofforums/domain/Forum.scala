@@ -8,4 +8,5 @@ import scala.collection.mutable.ListBuffer
 case class Forum(policy: ForumPolicy) {
   val users = ListBuffer[User]()
   val subForums = ListBuffer[SubForum]()
+  val reports = ListBuffer[Report]()
 }

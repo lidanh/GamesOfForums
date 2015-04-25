@@ -4,11 +4,9 @@ import java.util.UUID
 
 import com.gamesofforums.domain._
 import com.gamesofforums.exceptions.DataValidationImplicits._
-import com.gamesofforums.exceptions.{InvalidDataException, LoginException, RegistrationException}
+import com.gamesofforums.exceptions.{ReportException, InvalidDataException, LoginException, RegistrationException}
 import com.twitter.util.Try
 import com.wix.accord.{Failure, Success}
-
-import scala.annotation.tailrec
 
 /**
  * Created by lidanh on 4/5/15.
@@ -16,6 +14,7 @@ import scala.annotation.tailrec
 class ForumService(forum: Forum,
                    passwordHasher: PasswordHasher = SHA1Hash,
                     mailService: MailService = new MailService()) {
+
   def register(firstName: String, lastName: String, mail: String, password: String): Try[User] = {
     val users = forum.users
 
@@ -29,13 +28,13 @@ class ForumService(forum: Forum,
         mail = mail,
         password = passwordHasher.hash(password),
         role = NormalUser,
-        isVerified = false)
+        verificationCode = Some(UUID.randomUUID().toString))
 
       user.validate and forum.policy.passwordPolicy.validate(password) match {
         case Success => {
           users += user
           // send verification mail
-          mailService.sendMail("Verifiction", Seq(user.mail), s"Verify your account: ${UUID.randomUUID().toString}")
+          mailService.sendMail("Verifiction", Seq(user.mail), s"Verify your account: ${user.verificationCode}")
 
           user
         }
@@ -47,7 +46,7 @@ class ForumService(forum: Forum,
   def login(mail: String, password: String): Try[User] = {
     Try {
       forum.users.find(_.mail == mail) match {
-        case Some(user @ User(_, _, _, pass, _, _)) if pass == passwordHasher.hash(password) => user
+        case Some(user) if user.password == passwordHasher.hash(password) => user
         case Some(_) => throw LoginException("Incorrect password")
         case None => throw LoginException("User is not registered")
       }
@@ -75,7 +74,7 @@ class ForumService(forum: Forum,
 
       post.validate match {
         case Success => {
-          subForum.posts += post
+          subForum.messages += post
           postedBy.messages += post
           post.subscribers += postedBy
           post
@@ -84,8 +83,6 @@ class ForumService(forum: Forum,
       }
     }
   }
-
-
 
   def publishComment(parent: Message, content: String, postedBy: User): Try[Comment] = {
     Try {
@@ -101,6 +98,31 @@ class ForumService(forum: Forum,
           rootPost.subscribers.foreach(subscriber => if (subscriber != postedBy) subscriber.notify(comment))
 
           comment
+        }
+        case Failure(violations) => throw new InvalidDataException(violations)
+      }
+    }
+  }
+
+  def report(subforum: SubForum, reportedUser: User, moderator: User, reportContent: String): Try[Report] = {
+    Try {
+      // validate that the reported user has already posted in the given subforum
+      if (!subforum.messages.exists(m => m.postedBy == reportedUser))
+        throw new ReportException("User haven't publish a message the given subforum")
+
+      // validate that the given moderator is a moderator in the given subforum
+      if (!subforum.moderators.contains(moderator))
+        throw new ReportException("The given moderator is not a moderator in the given subforum")
+
+      val report = Report(
+        reportedUser = reportedUser,
+        moderator = moderator,
+        content = reportContent)
+
+      report.validate match {
+        case Success => {
+          forum.reports += report
+          report
         }
         case Failure(violations) => throw new InvalidDataException(violations)
       }

@@ -14,7 +14,7 @@ case class User(firstName: String,
                 mail: String,
                 password: String,
                 role: Role = NormalUser,
-                isVerified: Boolean = false) extends ValidationSupport {
+                verificationCode: Option[String] = None) extends ValidationSupport {
 
   val messages = ListBuffer[Message]()
   override implicit val validator: Validator[User] = User.validator
@@ -22,6 +22,8 @@ case class User(firstName: String,
   def notify(message: Message): Unit = {
     // Todo: notify user
   }
+
+  def is(role: Role) = copy(role = role)
 }
 
 object User {

@@ -8,9 +8,10 @@ import scala.annotation.tailrec
 /**
  * Created by Guy Gonen on 08/04/2015.
  */
-case class Comment(content: String, parent: Message, postedBy: User) extends Message(content, postedBy) {
+case class Comment(override val content: String, parent: Message, override val postedBy: User) extends Message(content, postedBy) {
   override val validator: Validator[Comment] = Comment.validator
   parent.comments += this
+  rootPost.postedIn.messages += this
 }
 
 object Comment {

@@ -30,4 +30,10 @@ class UserTests extends Specification with ResultMatchers {
       validUser.copy(password = "").validate should failWith("password" -> "must not be empty")
     }
   }
+
+  "Set user role" should {
+    "return a new user object with the given role" in {
+      (validUser is God).role should beEqualTo(God)
+    }
+  }
 }
