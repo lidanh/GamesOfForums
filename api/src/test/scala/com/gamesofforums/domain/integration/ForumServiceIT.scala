@@ -3,7 +3,7 @@ package com.gamesofforums.domain.integration
 import com.gamesofforums.{MailService, ForumService}
 import com.gamesofforums.domain.PasswordPolicy.WeakPasswordPolicy
 import com.gamesofforums.domain._
-import com.gamesofforums.exceptions.{ReportException, LoginException, RegistrationException}
+import com.gamesofforums.exceptions.{SubForumException, ReportException, LoginException, RegistrationException}
 import com.gamesofforums.matchers.ForumMatchers
 import org.mockito.Matchers
 import org.specs2.matcher.{AlwaysMatcher, Matcher}
@@ -25,8 +25,9 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   val somePass = "somePass"
 
   trait Ctx extends Scope {
+    val mockMailService = mock[MailService]
     val forum = Forum(policy = ForumPolicy())
-    val forumService = new ForumService(forum = forum)
+    val forumService = new ForumService(forum = forum, mailService = mockMailService)
   }
 
   def userWith(mail: Matcher[String] = AlwaysMatcher(),
@@ -88,15 +89,12 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         password = "") must beDataViolationFailure(withViolation("password" -> "must not be empty"))
     }
 
-    "send verification code to user's email upon registration" in {
-      val mockService = mock[MailService]
-      val mockMailForumService = new ForumService(forum = Forum(ForumPolicy()), mailService = mockService)
-
-      val result = mockMailForumService.register(firstName, lastName, someEmail, somePass)
+    "send verification code to user's email upon registration" in new Ctx {
+      val result = forumService.register(firstName, lastName, someEmail, somePass)
 
       val verificationCode = result.get().verificationCode.getOrElse("unknown")
 
-      there was one(mockService).sendMail(
+      there was one(mockMailService).sendMail(
         subject = anyString,
         recipients = Matchers.eq(Seq(someEmail)),
         content = contain(verificationCode))
@@ -277,6 +275,21 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       )
 
       forumService.report(subforum, user, regularUser, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
+    }
+  }
+
+  "subforum deletion" should {
+    "success if the subforum exists // TBI: permissions" in new Ctx {
+      val moderatorMail = "some@moderator.com"
+      forum.users += User("bibi", "bugi", moderatorMail, "1234")
+      val sub = forumService.createSubforum("someLand", Seq(moderatorMail)).get()
+
+      forumService.deleteSubforum(sub) must beSuccessful[Unit]
+      forum.subForums must not(contain(sub))
+    }
+
+    "failed if the subforum doesnt exist" in new Ctx {
+      forumService.deleteSubforum(SubForum("Winterfall", Seq.empty)) must beFailure[Unit, SubForumException]("subforum was not found")
     }
   }
 }

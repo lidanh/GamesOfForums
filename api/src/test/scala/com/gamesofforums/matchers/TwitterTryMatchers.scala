@@ -26,6 +26,10 @@ trait TwitterTryMatchers { this: Matchers =>
     beSuccessful[T](===(result))
   }
 
+  def beSuccessful[T]: Matcher[Try[T]] = {
+    SuccessMatcher[T]()
+  }
+
   def beFailure[O, T <: Throwable : ClassTag](msg: Matcher[String] = AlwaysMatcher()): Matcher[Try[O]] = {
     // be a failure
     FailureMatcher[O]() and

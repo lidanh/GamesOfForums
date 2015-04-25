@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.gamesofforums.domain._
 import com.gamesofforums.exceptions.DataValidationImplicits._
-import com.gamesofforums.exceptions.{ReportException, InvalidDataException, LoginException, RegistrationException}
+import com.gamesofforums.exceptions._
 import com.twitter.util.Try
 import com.wix.accord.{Failure, Success}
 
@@ -16,11 +16,9 @@ class ForumService(forum: Forum,
                     mailService: MailService = new MailService()) {
 
   def register(firstName: String, lastName: String, mail: String, password: String): Try[User] = {
-    val users = forum.users
-
     Try {
       // check duplication
-      if (users.exists(_.mail == mail)) throw RegistrationException("User already registered")
+      if (forum.users.exists(_.mail == mail)) throw RegistrationException("User already registered")
 
       val user = User(
         firstName,
@@ -32,7 +30,7 @@ class ForumService(forum: Forum,
 
       user.validate and forum.policy.passwordPolicy.validate(password) match {
         case Success => {
-          users += user
+          forum.users += user
           // send verification mail
           mailService.sendMail("Verifiction", Seq(user.mail), s"Verify your account: ${user.verificationCode}")
 
@@ -125,6 +123,16 @@ class ForumService(forum: Forum,
           report
         }
         case Failure(violations) => throw new InvalidDataException(violations)
+      }
+    }
+  }
+
+  def deleteSubforum(subforum: SubForum): Try[Unit] = {
+    Try {
+      if (forum.subForums.contains(subforum)) {
+        forum.subForums -= subforum
+      } else {
+        throw new SubForumException("subforum was not found")
       }
     }
   }
