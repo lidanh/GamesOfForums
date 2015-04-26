@@ -51,7 +51,7 @@ class ForumService(forum: Forum,
     }
   }
 
-  def createSubforum(name: String, moderators: Seq[String])(implicit user: Option[User]): Try[SubForum] = {
+  def createSubforum(name: String, moderators: Seq[String])(implicit user: Option[User] = None): Try[SubForum] = {
     Try {
       withPermission(ManageSubForums) {
         val subForum = SubForum(name)
@@ -69,7 +69,7 @@ class ForumService(forum: Forum,
   }
 
   // todo: remove postedby because we already have it implicitly
-  def publishPost(subForum: SubForum, subject: String, content: String, postedBy: User)(implicit user: Option[User]): Try[Post] = {
+  def publishPost(subForum: SubForum, subject: String, content: String, postedBy: User)(implicit user: Option[User] = None): Try[Post] = {
     Try {
       val post = Post(subject, content, postedBy, subForum)
 
@@ -87,7 +87,7 @@ class ForumService(forum: Forum,
     }
   }
 
-  def publishComment(parent: Message, content: String, postedBy: User)(implicit user: Option[User]): Try[Comment] = {
+  def publishComment(parent: Message, content: String, postedBy: User)(implicit user: Option[User] = None): Try[Comment] = {
     Try {
       val comment = Comment(content, parent, postedBy)
 
@@ -110,32 +110,34 @@ class ForumService(forum: Forum,
     }
   }
 
-  def report(subforum: SubForum, reportedUser: User, moderator: User, reportContent: String): Try[Report] = {
+  def report(subforum: SubForum, reportedUser: User, moderator: User, reportContent: String)(implicit user: Option[User] = None): Try[Report] = {
     Try {
-      // validate that the reported user has already posted in the given subforum
-      if (!subforum.messages.exists(m => m.postedBy == reportedUser))
-        throw new ReportException("User hasn't publish a message the given subforum")
+      withPermission(ReportUsers) {
+        // validate that the reported user has already posted in the given subforum
+        if (!subforum.messages.exists(m => m.postedBy == reportedUser))
+          throw new ReportException("User hasn't publish a message the given subforum")
 
-      // validate that the given moderator is a moderator in the given subforum
-      if (!moderator.role.isInstanceOf[Moderator] || !subforum.moderators.contains(moderator.role))
-        throw new ReportException("The given moderator is not a moderator in the given subforum")
+        // validate that the given moderator is a moderator in the given subforum
+        if (!moderator.role.isInstanceOf[Moderator] || !subforum.moderators.contains(moderator.role))
+          throw new ReportException("The given moderator is not a moderator in the given subforum")
 
-      val report = Report(
-        reportedUser = reportedUser,
-        otherUser = moderator,
-        content = reportContent)
+        val report = Report(
+          reportedUser = reportedUser,
+          otherUser = moderator,
+          content = reportContent)
 
-      report.validate match {
-        case Success => {
-          forum.reports += report
-          report
+        report.validate match {
+          case Success => {
+            forum.reports += report
+            report
+          }
+          case Failure(violations) => throw new InvalidDataException(violations)
         }
-        case Failure(violations) => throw new InvalidDataException(violations)
       }
     }
   }
 
-  def deleteSubforum(subforum: SubForum)(implicit user: Option[User]): Try[Unit] = {
+  def deleteSubforum(subforum: SubForum)(implicit user: Option[User] = None): Try[Unit] = {
     Try {
       withPermission(ManageSubForums) {
         if (forum.subForums.contains(subforum)) {

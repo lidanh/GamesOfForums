@@ -4,6 +4,7 @@ import com.shingimmel.dsl.Permission
 
 /* Normal User Permissions */
 object Publish extends Permission
+object ReportUsers extends Permission
 
 object EditMessages extends Permission
 object DeleteMessages extends Permission

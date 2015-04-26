@@ -57,6 +57,10 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
       role must havePermissionTo(DeleteMessages)(userPost) and
         not(havePermissionTo(DeleteMessages)(otherUserPost))
     }
+
+    "can report other users" in new NormalUserCtx {
+      role must havePermissionTo(ReportUsers)(otherUser)
+    }
   }
 
   trait ModeratorCtx extends Ctx {

@@ -17,7 +17,11 @@ class RolePermissionsTests extends Specification with RolesSharedTests with Foru
     behaveLike(aNormalUser)
 
     "have publish, edit and delete permissions but nothing else" in {
-      aNormalUser must havePermissionOnlyTo(Publish, EditMessages, DeleteMessages)
+      aNormalUser must havePermissionOnlyTo(
+        Publish,
+        EditMessages,
+        DeleteMessages,
+        ReportUsers)
     }
   }
   
@@ -29,6 +33,7 @@ class RolePermissionsTests extends Specification with RolesSharedTests with Foru
         Publish,
         EditMessages,
         DeleteMessages,
+        ReportUsers,
         Ban)
     }
   }
@@ -41,6 +46,7 @@ class RolePermissionsTests extends Specification with RolesSharedTests with Foru
         Publish,
         EditMessages,
         DeleteMessages,
+        ReportUsers,
         Ban,
         ManageSubForumModerators,
         ManageForumAdmins,
@@ -57,6 +63,7 @@ class RolePermissionsTests extends Specification with RolesSharedTests with Foru
         EditMessages,
         DeleteMessages,
         Ban,
+        ReportUsers,
         ManageSubForumModerators,
         ManageForumAdmins,
         ManageSubForums,

@@ -39,10 +39,6 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     implicit val normalUser = Some(User("some user", "some user", userMail, "$$", NormalUser))
   }
 
-  trait Guest extends Scope {
-    implicit val guestUser: Option[User] = None
-  }
-
   def userWith(mail: Matcher[String] = AlwaysMatcher(),
                password: Matcher[String] = AlwaysMatcher()): Matcher[User] = {
     mail ^^ { (_: User).mail } and
@@ -201,7 +197,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         beDataViolationFailure(withViolation("subject" -> "must not be empty"))
     }
 
-    "failed for guest user (doesn't have permission to publish)" in new PublishCtx with Guest {
+    "failed for guest user (doesn't have permission to publish)" in new PublishCtx {
       forumService.publishPost(fakeSubforum, subject = "", "kukibuki", fakeUser) must beSessionExpiredFailure
     }
   }
@@ -238,7 +234,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       forumService.publishComment(fakePost, "", fakeUser) must beDataViolationFailure(withViolation("content" -> "must not be empty"))
     }
 
-    "failed for guest user (doesn't have permission to publish)" in new PublishCtx with Guest {
+    "failed for guest user (doesn't have permission to publish)" in new PublishCtx {
       forumService.publishComment(fakePost, "", fakeUser) must beSessionExpiredFailure
     }
   }
@@ -284,7 +280,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       forumService.report(subforum, user, moderator, someContent) must beSuccessful(reportWith(someContent))
     }
 
-    "failed if the user haven't post any message in the moderator's forum" in new ReportCtx {
+    "failed if the user haven't post any message in the moderator's forum" in new ReportCtx with NormalUser {
       forumService.report(subforum, user, moderator, "some complaint") must beFailure[Report, ReportException]("User hasn't publish a message the given subforum")
     }
 
@@ -312,6 +308,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       )
 
       forumService.report(subforum, user, regularUser, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
+    }
+
+    "failed for unauthorized user (doesn't have permission to report)" in new ReportCtx {
+      forumService.report(subforum, user, moderator, "blabla") must beSessionExpiredFailure
     }
   }
 

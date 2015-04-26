@@ -9,6 +9,7 @@ object NormalUser extends Role with RulesPredicates {
 
   override implicit val authRules: AuthorizationRules[User] = rulesFor[User] {
     can(Publish)
+    can(ReportUsers)
     can(EditMessages) onlyWhen heOwnsTheMessage
     can(DeleteMessages) onlyWhen heOwnsTheMessage
   }
