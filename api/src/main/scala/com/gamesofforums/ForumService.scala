@@ -13,7 +13,7 @@ import com.wix.accord.{Failure, Success}
  */
 class ForumService(forum: Forum,
                    passwordHasher: PasswordHasher = SHA1Hash,
-                    mailService: MailService = new MailService()) {
+                    mailService: MailService = new MailService()) extends AuthorizationSupport {
 
   def register(firstName: String, lastName: String, mail: String, password: String): Try[User] = {
     Try {
@@ -51,54 +51,61 @@ class ForumService(forum: Forum,
     }
   }
 
-  def createSubforum(name: String, moderators: Seq[String]): Try[SubForum] = {
+  def createSubforum(name: String, moderators: Seq[String])(implicit user: Option[User]): Try[SubForum] = {
     Try {
-      val subForum = SubForum(name)
-      forum.users.filter(u => moderators.contains(u.mail)).foreach(u => u is Moderator(subForum))
+      withPermission(ManageSubForums) {
+        val subForum = SubForum(name)
+        forum.users.filter(u => moderators.contains(u.mail)).foreach(u => u is Moderator(subForum))
 
-      subForum.validate(forum.policy) match {
-        case Success => {
-          forum.subForums += subForum
-          subForum
+        subForum.validate(forum.policy) match {
+          case Success => {
+            forum.subForums += subForum
+            subForum
+          }
+          case Failure(violations) => throw new InvalidDataException(violations)
         }
-        case Failure(violations) => throw new InvalidDataException(violations)
       }
     }
   }
 
-  def publishPost(subForum: SubForum, subject: String, content: String, postedBy: User): Try[Post] = {
+  // todo: remove postedby because we already have it implicitly
+  def publishPost(subForum: SubForum, subject: String, content: String, postedBy: User)(implicit user: Option[User]): Try[Post] = {
     Try {
       val post = Post(subject, content, postedBy, subForum)
 
-      post.validate match {
-        case Success => {
-          subForum.messages += post
-          postedBy.messages += post
-          post.subscribers += postedBy
-          post
+      withPermission(Publish, post) {
+        post.validate match {
+          case Success => {
+            subForum.messages += post
+            postedBy.messages += post
+            post.subscribers += postedBy
+            post
+          }
+          case Failure(violations) => throw new InvalidDataException(violations)
         }
-        case Failure(violations) => throw new InvalidDataException(violations)
       }
     }
   }
 
-  def publishComment(parent: Message, content: String, postedBy: User): Try[Comment] = {
+  def publishComment(parent: Message, content: String, postedBy: User)(implicit user: Option[User]): Try[Comment] = {
     Try {
       val comment = Comment(content, parent, postedBy)
 
-      comment.validate match {
-        case Success => {
-          parent.comments += comment
-          val rootPost = comment.rootPost
-          rootPost.postedIn.messages += comment
-          // subscribe user
-           rootPost.subscribers += postedBy
-          // notify post subscribers
-          rootPost.subscribers.foreach(subscriber => if (subscriber != postedBy) subscriber.notify(comment))
+      withPermission(Publish, comment) {
+        comment.validate match {
+          case Success => {
+            parent.comments += comment
+            val rootPost = comment.rootPost
+            rootPost.postedIn.messages += comment
+            // subscribe user
+            rootPost.subscribers += postedBy
+            // notify post subscribers
+            rootPost.subscribers.foreach(subscriber => if (subscriber != postedBy) subscriber.notify(comment))
 
-          comment
+            comment
+          }
+          case Failure(violations) => throw new InvalidDataException(violations)
         }
-        case Failure(violations) => throw new InvalidDataException(violations)
       }
     }
   }
@@ -128,12 +135,14 @@ class ForumService(forum: Forum,
     }
   }
 
-  def deleteSubforum(subforum: SubForum): Try[Unit] = {
+  def deleteSubforum(subforum: SubForum)(implicit user: Option[User]): Try[Unit] = {
     Try {
-      if (forum.subForums.contains(subforum)) {
-        forum.subForums -= subforum
-      } else {
-        throw new SubForumException("subforum was not found")
+      withPermission(ManageSubForums) {
+        if (forum.subForums.contains(subforum)) {
+          forum.subForums -= subforum
+        } else {
+          throw new SubForumException("subforum was not found")
+        }
       }
     }
   }

@@ -132,7 +132,7 @@ trait RolesSharedTests { this: Specification with ForumMatchers =>
       role must havePermissionTo(DeleteMessages)(somePostInSubforum)
     }
 
-    "can delete any comment forums that he moderates" in new ForumAdminCtx {
+    "can delete any comment in any forum" in new ForumAdminCtx {
       role must havePermissionTo(DeleteMessages)(commentUnderPost)
     }
 

@@ -1,7 +1,7 @@
 package com.gamesofforums.matchers
 
-import com.gamesofforums.domain.{Role, User}
-import com.gamesofforums.exceptions.{DataViolation, InvalidDataException}
+import com.gamesofforums.domain.{Post, Role, User}
+import com.gamesofforums.exceptions.{UserSessionExpiredException, AuthorizationException, DataViolation, InvalidDataException}
 import com.shingimmel.ShinGimmelMatchers
 import com.shingimmel.dsl.Permission
 import com.twitter.util.{Throw, Try}
@@ -33,6 +33,12 @@ trait ForumMatchers extends TwitterTryMatchers with ShinGimmelMatchers { this: M
       }
     }
   }
+
+  def beAnAuthorizationFailure[T](user: String): Matcher[Try[T]] = {
+    beFailure[T, AuthorizationException](contain(user) and contain("does not have permission"))
+  }
+
+  def beSessionExpiredFailure = beFailure[Any, UserSessionExpiredException]("User session expired. please log in.")
 
   def havePermissionOnlyTo(permissions: Permission*): Matcher[Role] = {
     onlyHavePermissionsTo(permissions: _*) ^^ { (_: Role).authRules aka "user authorization rules" }
