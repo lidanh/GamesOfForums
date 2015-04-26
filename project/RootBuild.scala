@@ -1,6 +1,5 @@
-import sbt.Tests.Argument
-import sbt._
 import sbt.Keys._
+import sbt._
 
 object RootBuild extends Build {
   lazy val testsSettings = Seq(
@@ -44,6 +43,7 @@ object RootBuild extends Build {
         "com.twitter" % "util-core_2.10" % "6.23.0",
         "com.wix" %% "accord-core" % "0.5-SNAPSHOT",
         "com.sendgrid" % "sendgrid-java" % "2.0.0",
+        "com.typesafe" % "config" % "1.2.1",
 
         // test packages
         "org.specs2" %% "specs2-mock" % "3.3.1" % Test,

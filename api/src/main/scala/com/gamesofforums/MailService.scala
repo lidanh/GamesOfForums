@@ -1,18 +1,23 @@
 package com.gamesofforums
 
-import com.sendgrid.SendGrid.{Response => SGResponse, Email}
+import com.sendgrid.SendGrid.{Email, Response => SGResponse}
 import com.sendgrid._
+import com.typesafe.config.ConfigFactory
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import ExecutionContext.Implicits.global
 
 /**
  * Created by lidanh on 4/25/15.
  */
 class MailService {
+  private[this] val conf = ConfigFactory.load()
+  private[this] lazy val username = conf.getString("mail.sendgrid.username")
+  private[this] lazy val password = conf.getString("mail.sendgrid.password")
+
   def sendMail(subject: String, recipients: Seq[String], content: String): Unit = {
     // todo: take credentials from properties file!
-    val sendgrid = new SendGrid("gamesofforums", "GamesOfForums2014")
+    val sendgrid = new SendGrid(username, password)
 
     val mail = new Email()
     mail.setFrom("noreply@games-of-forums.com")
@@ -20,7 +25,7 @@ class MailService {
     mail.setSubject(subject)
     mail.setText(content)
 
-    val mailResult = future {
+    future {
       recipients.map { recipient =>
         mail.setTo(Array(recipient))
 
@@ -38,4 +43,5 @@ object testapp extends App {
   s.sendMail("hello", Seq("euroil@gmail.com"), "test mail")
 
   Thread.sleep(1000000)
+
 }
