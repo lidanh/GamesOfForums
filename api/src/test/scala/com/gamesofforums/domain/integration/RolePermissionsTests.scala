@@ -1,7 +1,7 @@
 package com.gamesofforums.domain.integration
 
 import com.gamesofforums.domain._
-import com.gamesofforums.matchers.{RolesSharedTests, ForumMatchers}
+import com.gamesofforums.matchers.{ForumMatchers, RolesSharedTests}
 import org.specs2.mutable.Specification
 
 /**

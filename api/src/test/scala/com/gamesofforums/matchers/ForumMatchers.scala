@@ -1,12 +1,11 @@
 package com.gamesofforums.matchers
 
-import com.gamesofforums.domain.{User, Role}
-import com.gamesofforums.exceptions.{InvalidDataException, DataViolation}
+import com.gamesofforums.domain.{Role, User}
+import com.gamesofforums.exceptions.{DataViolation, InvalidDataException}
 import com.shingimmel.ShinGimmelMatchers
 import com.shingimmel.dsl.Permission
 import com.twitter.util.{Throw, Try}
-import org.specs2.matcher.{MatchResult, Expectable, AlwaysMatcher, Matcher}
-import org.specs2.matcher._
+import org.specs2.matcher.{AlwaysMatcher, Expectable, MatchResult, Matcher, _}
 
 /**
  * Created by lidanh on 4/19/15.

@@ -1,17 +1,16 @@
 package com.gamesofforums.domain.integration
 
-import com.gamesofforums.{MailService, ForumService}
 import com.gamesofforums.domain.PasswordPolicy.WeakPasswordPolicy
 import com.gamesofforums.domain._
-import com.gamesofforums.exceptions.{SubForumException, ReportException, LoginException, RegistrationException}
+import com.gamesofforums.exceptions.{LoginException, RegistrationException, ReportException, SubForumException}
 import com.gamesofforums.matchers.ForumMatchers
+import com.gamesofforums.{ForumService, MailService}
 import org.mockito.Matchers
 import org.specs2.matcher.{AlwaysMatcher, Matcher}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 /**

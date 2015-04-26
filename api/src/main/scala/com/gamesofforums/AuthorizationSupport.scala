@@ -1,7 +1,7 @@
 package com.gamesofforums
 
 import com.gamesofforums.domain.User
-import com.gamesofforums.exceptions.{UserSessionExpiredException, AuthorizationException}
+import com.gamesofforums.exceptions.{AuthorizationException, UserSessionExpiredException}
 import com.shingimmel.dsl.Permission
 
 /**

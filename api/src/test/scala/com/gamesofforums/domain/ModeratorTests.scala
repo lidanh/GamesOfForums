@@ -13,7 +13,7 @@ class ModeratorTests extends Specification {
 
       user is Moderator(at = subforum)
 
-      subforum._moderators must be_==(Seq(user.role))
+      subforum.moderators must be_==(Seq(user.role))
     }
   }
 }

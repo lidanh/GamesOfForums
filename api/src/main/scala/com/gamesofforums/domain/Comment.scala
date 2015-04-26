@@ -3,8 +3,6 @@ package com.gamesofforums.domain
 import com.wix.accord.Validator
 import com.wix.accord.dsl.{validator => accordValidator, _}
 
-import scala.annotation.tailrec
-
 /**
  * Created by Guy Gonen on 08/04/2015.
  */

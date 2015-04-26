@@ -16,12 +16,11 @@ class MailService {
   private[this] lazy val password = conf.getString("mail.sendgrid.password")
 
   def sendMail(subject: String, recipients: Seq[String], content: String): Unit = {
-    // todo: take credentials from properties file!
     val sendgrid = new SendGrid(username, password)
 
     val mail = new Email()
-    mail.setFrom("noreply@games-of-forums.com")
-    mail.setFromName("Games of Forums")
+    mail.setFrom(conf.getString("from.mail"))
+    mail.setFromName(conf.getString("from.name"))
     mail.setSubject(subject)
     mail.setText(content)
 

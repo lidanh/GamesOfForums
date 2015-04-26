@@ -3,7 +3,6 @@ package com.gamesofforums.domain
 import com.wix.accord.Validator
 import com.wix.accord.dsl.{validator => accordValidator, _}
 
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 /**

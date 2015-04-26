@@ -5,8 +5,6 @@ import com.wix.accord.specs2.ResultMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
-import scala.collection.mutable.ListBuffer
-
 /**
  * Created by lidanh on 4/18/15.
  */

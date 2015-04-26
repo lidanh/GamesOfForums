@@ -1,7 +1,7 @@
 package com.shingimmel
 
-import org.specs2.mutable.Specification
 import com.shingimmel.dsl._
+import org.specs2.mutable.Specification
 
 /**
  * Created by lidanh on 4/24/15.
