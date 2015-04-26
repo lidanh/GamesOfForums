@@ -32,9 +32,11 @@ Finished in 162 ms
 ### Weak password policy should
   + return success upon a valid weak password
   + return failure upon an invalid weak password
+
 ### Medium password policy should
   + return success upon a valid medium password
   + return failure upon an invalid medium password
+
 ### Hard password policy should
   + return success upon a valid hard password
   + return failure upon an invalid hard password
@@ -49,8 +51,10 @@ Finished in 196 ms
   + be valid with subject and content
   + be invalid without subject
   + be invalid without content
+
 ### Post.root should
   + return the post itself
+
 ### Delete post comments should
   + remove all the post's comments successfully
   + remove all the post's comments from the subforum messages
@@ -67,6 +71,7 @@ Finished in 201 ms
   + be invalid without last name
   + be invalid with invalid email
   + be invalid without password
+
 ### Set user role should
   + change user's role if stronger than the current one
   + change user's role if weaker than the current one
@@ -80,10 +85,13 @@ Finished in 197 ms
 
 ### A moderator should
   + be stronger than a normal user
+
 ### A forum admin should
   + be stronger than a moderator
+
 ### God should
   + be stronger than a forum admin
+
 ### Transitivity roles should
   + success
 
@@ -108,8 +116,10 @@ Finished in 60 ms
 ### Comment should
   + be valid with content
   + be invalid without content
+
 ### Comment.root should
   + return the root post of the comment
+
 ### Delete comment comments should
   + remove all the comment's comments successfully
   + remove all the comment's comments from the root post subforum's messages
@@ -123,21 +133,28 @@ Finished in 110 ms
 ### basic permission rules should
   + allows the given permissions but nothing else
   + allows the given permissions for any kind of resource
+
 ### restrict access to a specific kind of resource should
   + allows access to the restricted resource
   + block the given permission on other resources
+
 ### restrict access based on a predicate should
   + allows access to a resource that satisfies the predicate
   + block access if predicate was not satisfied
+
 ### rules derivation from single parent should
   + allows access to parent's permissions and child's permissions but nothing else
   + allows access to any kind of resource based on child's & parent's permissions
+
 ### rules derivation from multiple parents should
   + allows access to all parents' permissions and child's permissions but nothing else
+
 ### rules overridden of same kind should
   + give precedence to child's permissions
+
 ### reduce permissions by rules overridden of different kind should
   + combines parent's & child permissions
+
 ### extend permissions by rules overridden of different kinds should
   + combines parent's & child permissions
 
