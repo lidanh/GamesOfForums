@@ -38,9 +38,9 @@ class MailService {
 
 /* only for testing! */
 object testapp extends App {
-  val s = new MailService()
-  s.sendMail("hello", Seq("euroil@gmail.com"), "test mail")
-
-  Thread.sleep(1000000)
+//  val s = new MailService()
+//  s.sendMail("hello", Seq("euroil@gmail.com"), "test mail")
+//
+//  Thread.sleep(1000000)
 
 }

@@ -6,6 +6,7 @@ import com.gamesofforums.domain._
 import com.gamesofforums.exceptions.DataValidationImplicits._
 import com.gamesofforums.exceptions._
 import com.twitter.util.Try
+import com.typesafe.scalalogging.{StrictLogging, LazyLogging}
 import com.wix.accord.{Failure, Success}
 
 /**
@@ -13,7 +14,7 @@ import com.wix.accord.{Failure, Success}
  */
 class ForumService(forum: Forum,
                    passwordHasher: PasswordHasher = SHA1Hash,
-                    mailService: MailService = new MailService()) extends AuthorizationSupport {
+                   mailService: MailService = new MailService()) extends AuthorizationSupport with LazyLogging {
 
   def register(firstName: String, lastName: String, mail: String, password: String): Try[User] = {
     Try {
@@ -31,6 +32,8 @@ class ForumService(forum: Forum,
       user.validate and forum.policy.passwordPolicy.validate(password) match {
         case Success => {
           forum.users += user
+          logger.info(s"User ${user.mail} has registered successfully.")
+
           // send verification mail
           mailService.sendMail("Verifiction", Seq(user.mail), s"Verify your account: ${user.verificationCode}")
 
@@ -44,9 +47,18 @@ class ForumService(forum: Forum,
   def login(mail: String, password: String): Try[User] = {
     Try {
       forum.users.find(_.mail == mail) match {
-        case Some(user) if user.password == passwordHasher.hash(password) => user
-        case Some(_) => throw LoginException("Incorrect password")
-        case None => throw LoginException("User is not registered")
+        case Some(user) if user.password == passwordHasher.hash(password) => {
+          logger.info(s"User ${user.mail} has logged in successfully.")
+          user
+        }
+        case Some(_) => {
+          logger.warn(s"User ${mail} tried to log in with incorrect password.")
+          throw LoginException("Incorrect password")
+        }
+        case None => {
+          logger.warn(s"User ${mail} tried to log in but he is not a registered user.")
+          throw LoginException("User is not registered")
+        }
       }
     }
   }
@@ -60,6 +72,7 @@ class ForumService(forum: Forum,
         subForum.validate(forum.policy) match {
           case Success => {
             forum.subForums += subForum
+            logger.info(s"Subforum ${subForum} has created successfully.")
             subForum
           }
           case Failure(violations) => throw new InvalidDataException(violations)
@@ -79,6 +92,8 @@ class ForumService(forum: Forum,
             subForum.messages += post
             postedBy.messages += post
             post.subscribers += postedBy
+            logger.info(s"${postedBy.mail} published a new post: ${post}")
+
             post
           }
           case Failure(violations) => throw new InvalidDataException(violations)
@@ -101,6 +116,8 @@ class ForumService(forum: Forum,
             rootPost.subscribers += postedBy
             // notify post subscribers
             rootPost.subscribers.foreach(subscriber => if (subscriber != postedBy) subscriber.notify(comment))
+
+            logger.info(s"${postedBy.mail} published a new comment: ${comment}")
 
             comment
           }
