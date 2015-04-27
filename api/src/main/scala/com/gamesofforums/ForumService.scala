@@ -14,7 +14,7 @@ import com.wix.accord.{Failure, Success}
  */
 class ForumService(forum: Forum,
                    passwordHasher: PasswordHasher = SHA1Hash,
-                   mailService: MailService = new MailService()) extends AuthorizationSupport with LazyLogging {
+                   mailService: MailService) extends AuthorizationSupport with LazyLogging {
 
   def register(firstName: String, lastName: String, mail: String, password: String): Try[User] = {
     Try {

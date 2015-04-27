@@ -24,9 +24,15 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   val somePass = "somePass"
 
   trait Ctx extends Scope {
-    val mockMailService = mock[MailService] // MUST BE MOCKED! otherwise real emails will be sent!
+    val mailService = new MailService {
+      // simple mail service, just to test the contract
+      override def sendMail(subject: String, recipients: Seq[String], content: String): Unit = {
+        println(s"mail sent to $recipients: $subject / $content")
+      }
+    }
+    
     val forum = Forum(policy = ForumPolicy())
-    val forumService = new ForumService(forum = forum, mailService = mockMailService)
+    val forumService = new ForumService(forum = forum, mailService = mailService)
   }
 
   trait ForumAdminUser extends Scope {
@@ -93,7 +99,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
 
     "failed for an invalid password (doesn't meet the current password policy)" in new Ctx {
-      val userManagerWithPolicy = new ForumService(forum = Forum(policy = ForumPolicy(WeakPasswordPolicy)), mailService = mockMailService)
+      val userManagerWithPolicy = new ForumService(forum = Forum(policy = ForumPolicy(WeakPasswordPolicy)), mailService = mailService)
 
       userManagerWithPolicy.register(
         firstName = firstName,
@@ -103,7 +109,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
 
     "send verification code to user's email upon registration" in new Ctx {
-      val result = forumService.register(firstName, lastName, someEmail, somePass)
+      val mockMailService = mock[MailService]
+      val mockedService = new ForumService(forum = forum, mailService = mockMailService)
+
+      val result = mockedService.register(firstName, lastName, someEmail, somePass)
 
       val verificationCode = result.get().verificationCode.getOrElse("unknown")
 
@@ -156,7 +165,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
     "failed when the subforum does not meet the forum policy" in new Ctx with ForumAdminUser {
       val someForumWithNoModeratorsPolicy = Forum(policy = ForumPolicy(minModerators = 0, maxModerators = 0))
-      val service = new ForumService(forum = someForumWithNoModeratorsPolicy, mailService = mockMailService)
+      val service = new ForumService(forum = someForumWithNoModeratorsPolicy, mailService = mailService)
       service.register("blabla", "blabla", someEmail, "blabla")
 
       service.createSubforum("some subforum", List(someEmail)) must beDataViolationFailure(withViolation("moderators count" -> "got 1, expected between 0 and 0"))
