@@ -28,6 +28,10 @@ class InMemoryStorage extends ForumStorage {
           m.postedIn.messages += m
           m.postedBy.messages += m
         }
+        case m: Comment => {
+          m.parent.comments += m
+          m.rootPost.postedIn.messages += m
+        }
       }
 
       result

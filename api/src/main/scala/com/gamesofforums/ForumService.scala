@@ -6,7 +6,7 @@ import com.gamesofforums.domain._
 import com.gamesofforums.exceptions.DataValidationImplicits._
 import com.gamesofforums.exceptions._
 import com.twitter.util.Try
-import com.typesafe.scalalogging.{StrictLogging, LazyLogging}
+import com.typesafe.scalalogging.LazyLogging
 import com.wix.accord.{Failure, Success}
 
 /**
@@ -110,9 +110,8 @@ class ForumService(forum: Forum,   // todo: remove forum
       withPermission(Publish, comment) {
         comment.validate match {
           case Success => {
-            parent.comments += comment
+            db.messages += comment
             val rootPost = comment.rootPost
-            rootPost.postedIn.messages += comment
             // subscribe user
             rootPost.subscribers += postedBy
             // notify post subscribers

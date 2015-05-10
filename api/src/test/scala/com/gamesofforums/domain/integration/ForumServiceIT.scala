@@ -4,7 +4,7 @@ import com.gamesofforums.domain.PasswordPolicy.WeakPasswordPolicy
 import com.gamesofforums.domain._
 import com.gamesofforums.exceptions._
 import com.gamesofforums.matchers.ForumMatchers
-import com.gamesofforums.{InMemoryStorage, ForumService, MailService}
+import com.gamesofforums.{ForumService, InMemoryStorage, MailService}
 import org.mockito.Matchers
 import org.specs2.matcher.{AlwaysMatcher, Matcher}
 import org.specs2.mock.Mockito
@@ -22,6 +22,40 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   val lastName = "zibi"
   val someEmail = "someEmail@someDomain.com"
   val somePass = "somePass"
+
+  def userWith(mail: Matcher[String] = AlwaysMatcher(),
+               password: Matcher[String] = AlwaysMatcher()): Matcher[User] = {
+    mail ^^ {
+      (_: User).mail
+    } and
+      password ^^ {
+        (_: User).password
+      }
+  }
+
+  def postWith(subject: Matcher[String] = AlwaysMatcher(),
+               content: Matcher[String] = AlwaysMatcher(),
+               postedBy: Matcher[User] = AlwaysMatcher(),
+               subscribers: Matcher[ListBuffer[User]] = AlwaysMatcher()) = {
+    subject ^^ {
+      (_: Post).subject
+    } and
+      content ^^ {
+        (_: Post).content
+      } and
+      postedBy ^^ {
+        (_: Post).postedBy
+      } and
+      subscribers ^^ {
+        (_: Post).subscribers
+      }
+  }
+
+  def subForumWith(name: String): Matcher[SubForum] = ===(name) ^^ { (_: SubForum).name aka "sub forum name" }
+
+  def commentWith(content: String): Matcher[Comment] = ===(content) ^^ { (_: Comment).content aka "comment content" }
+
+  def reportWith(content: String): Matcher[Report] = ===(content) ^^ { (_: Report).content aka "report content" }
 
   trait Ctx extends Scope {
     val mailService = new MailService {
@@ -45,28 +79,6 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     val userMail = "u@ser.com"
     implicit val normalUser = Some(User("some user", "some user", userMail, "$$", NormalUser))
   }
-
-  def userWith(mail: Matcher[String] = AlwaysMatcher(),
-               password: Matcher[String] = AlwaysMatcher()): Matcher[User] = {
-    mail ^^ { (_: User).mail } and
-      password ^^ { (_: User).password }
-  }
-
-  def postWith(subject: Matcher[String] = AlwaysMatcher(),
-               content: Matcher[String] = AlwaysMatcher(),
-               postedBy: Matcher[User] = AlwaysMatcher(),
-               subscribers: Matcher[ListBuffer[User]] = AlwaysMatcher()) = {
-    subject ^^ { (_: Post).subject } and
-      content ^^ { (_: Post).content } and
-      postedBy ^^ { (_: Post).postedBy } and
-      subscribers ^^ { (_: Post).subscribers }
-  }
-
-  def subForumWith(name: String): Matcher[SubForum] = ===(name) ^^ { (_: SubForum).name aka "sub forum name" }
-
-  def commentWith(content: String): Matcher[Comment] = ===(content) ^^ { (_: Comment).content aka "comment content" }
-
-  def reportWith(content: String): Matcher[Report] = ===(content) ^^ { (_: Report).content aka "report content" }
 
   "Forum initialization" should {
     pending("TBI")
@@ -186,10 +198,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
   }
 
-  class PublishCtx extends Ctx {
-    val fakeSubforum = SubForum("some name")
-    val fakeUser = User("bla", "bla", "e@mail.com", "somepass", Moderator(at = fakeSubforum))
-    val fakePost = Post("kaka", "kaka", fakeUser, fakeSubforum)
+  trait ReportCtx extends Ctx {
+    val user = User("some normal user", "blabla", "test@user.com", "1234")
+    val subforum = SubForum("some forum")
+    val moderator = User("some moderator", "kuki", "mod@erator.com", "0000", Moderator(at = subforum))
   }
 
   "Publish post" should {
@@ -230,6 +242,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       result must beSuccessful(commentWith(someContent))
 
       // test persistency
+      db.messages must contain(result.get())
       fakePost.comments must contain(result.get())
       fakePost.subscribers must contain(fakeUser)
       fakeSubforum.messages must contain(result.get())
@@ -259,10 +272,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
   }
 
-  trait ReportCtx extends Ctx {
-    val user = User("some normal user", "blabla", "test@user.com", "1234")
-    val subforum = SubForum("some forum")
-    val moderator = User("some moderator", "kuki", "mod@erator.com", "0000", Moderator(at = subforum))
+  class PublishCtx extends Ctx {
+    val fakeSubforum = SubForum("some name")
+    val fakeUser = User("bla", "bla", "e@mail.com", "somepass", Moderator(at = fakeSubforum))
+    val fakePost = Post("kaka", "kaka", fakeUser, fakeSubforum)
   }
 
   "report moderator" should {
