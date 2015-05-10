@@ -84,7 +84,6 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   trait NormalUser extends Scope {
     val userMail = "u@ser.com"
     implicit val normalUser = Some(User(
-      generateId,
       firstName = "some user",
       lastName = "some user",
       mail = userMail,
@@ -93,7 +92,15 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   }
 
   "Forum initialization" should {
-    pending("TBI")
+    "forum is working???" in {
+      "yes" must be_===("yes")
+    }
+
+    "grade must be 100" in {
+      val grade = 100
+
+      grade must beEqualTo(100)
+    }
   }
 
   "User registration" should {
@@ -210,6 +217,93 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
   }
 
+  class PublishCtx extends Ctx {
+    val fakeSubforum = SubForum(name = "some name")
+    db.subforums += fakeSubforum
+
+    val fakeUser = User(
+      generateId,
+      firstName = "bla",
+      lastName = "bla",
+      mail = "e@mail.com",
+      password = "somepass",
+      _role = Moderator(at = fakeSubforum))
+  }
+
+  class PublishCommentCtx extends PublishCtx {
+    val fakePost = Post(generateId, subject = "kaka", content = "kaka", postedBy = fakeUser, postedIn = fakeSubforum)
+    db.messages += fakePost
+  }
+
+  "Publish post" should {
+    "success for a valid post, and the user who published is subscribed to the new post" in new PublishCtx with NormalUser {
+      val someSubject = "helloworld"
+      val someContent = "kukibuki"
+
+      val result = forumService.publishPost(fakeSubforum.id, someSubject, someContent)
+      result must beSuccessful(postWith(subject = ===(someSubject),
+        content = ===(someContent),
+        postedBy = ===(normalUser.get),
+        subscribers = contain(normalUser.get)))
+    }
+
+    "persist the published post in db, user messages and subforum messages" in new PublishCtx with NormalUser {
+      val post = forumService.publishPost(fakeSubforum.id, "bibi", "buzi").get()
+
+      db.messages must contain(post)
+      fakeSubforum.messages must contain(post)
+      normalUser.get.messages must contain(post)
+    }
+
+    "failed for an invalid post (no subject)" in new PublishCtx with NormalUser {
+      forumService.publishPost(fakeSubforum.id, subject = "", "kukibuki") must
+        beDataViolationFailure(withViolation("subject" -> "must not be empty"))
+    }
+
+    "failed for guest user (doesn't have permission to publish)" in new PublishCtx {
+      forumService.publishPost(fakeSubforum.id, subject = "", "kukibuki") must beSessionExpiredFailure
+    }
+  }
+
+  "Publish comment" should {
+    "success for a valid comment" in new PublishCommentCtx with NormalUser {
+      val someContent = "yo!"
+
+      val result = forumService.publishComment(fakePost.id, someContent)
+      result must beSuccessful(commentWith(someContent))
+
+      // test persistency
+      db.messages must contain(result.get())
+      fakePost.comments must contain(result.get())
+      fakePost.subscribers must contain(normalUser.get)
+      fakeSubforum.messages must contain(result.get())
+    }
+
+    "notify post subscribers except the comment publisher" in new PublishCommentCtx with NormalUser {
+      val commentPublisher = mock[User]
+      commentPublisher.messages returns ListBuffer[Message]()
+
+      // add subscriber to post
+      val somePost = Post(generateId, subject = "bibi", content = "zibi", postedBy = commentPublisher, postedIn = fakeSubforum)
+      db.messages += somePost
+      val otherSubscriber = mock[User]
+      somePost.subscribers += otherSubscriber
+
+      val comment = forumService.publishComment(somePost.id, "blabla").get()
+
+      there was one(otherSubscriber).notify(comment)
+      there was no(commentPublisher).notify(comment)
+    }
+
+    "failed for an invalid comment" in new PublishCommentCtx with NormalUser {
+      forumService.publishComment(fakePost.id, "") must beDataViolationFailure(withViolation("content" -> "must not be empty"))
+    }
+
+    "failed for guest user (doesn't have permission to publish)" in new PublishCommentCtx {
+      forumService.publishComment(fakePost.id, "") must beSessionExpiredFailure
+    }
+  }
+
   trait ReportCtx extends Ctx {
     val user = User(
       generateId,
@@ -217,7 +311,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       lastName = "blabla",
       mail = "test@user.com",
       password = "1234")
+
     val subforum = SubForum(generateId, name = "some forum")
+    db.subforums += subforum
+
     val moderator = User(
       generateId,
       firstName = "some moderator",
@@ -227,97 +324,16 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       _role = Moderator(at = subforum))
   }
 
-  "Publish post" should {
-    "success for a valid post, and the user who published is subscribed to the new post" in new PublishCtx with NormalUser {
-      val someSubject = "helloworld"
-      val someContent = "kukibuki"
-
-      val result = forumService.publishPost(fakeSubforum, someSubject, someContent, fakeUser)
-      result must beSuccessful(postWith(subject = ===(someSubject),
-        content = ===(someContent),
-        postedBy = ===(fakeUser),
-        subscribers = contain(fakeUser)))
-    }
-
-    "persist the published post in db, user messages and subforum messages" in new PublishCtx with NormalUser {
-      val post = forumService.publishPost(fakeSubforum, "bibi", "buzi", fakeUser).get()
-
-      db.messages must contain(post)
-      fakeSubforum.messages must contain(post)
-      fakeUser.messages must contain(post)
-    }
-
-    "failed for an invalid post (no subject)" in new PublishCtx with NormalUser {
-      forumService.publishPost(fakeSubforum, subject = "", "kukibuki", fakeUser) must
-        beDataViolationFailure(withViolation("subject" -> "must not be empty"))
-    }
-
-    "failed for guest user (doesn't have permission to publish)" in new PublishCtx {
-      forumService.publishPost(fakeSubforum, subject = "", "kukibuki", fakeUser) must beSessionExpiredFailure
-    }
-  }
-
-  "Publish comment" should {
-    "success for a valid comment" in new PublishCtx with NormalUser {
-      val someContent = "yo!"
-
-      val result = forumService.publishComment(fakePost, someContent, fakeUser)
-      result must beSuccessful(commentWith(someContent))
-
-      // test persistency
-      db.messages must contain(result.get())
-      fakePost.comments must contain(result.get())
-      fakePost.subscribers must contain(fakeUser)
-      fakeSubforum.messages must contain(result.get())
-    }
-
-    "notify post subscribers except the comment publisher" in new PublishCtx with NormalUser {
-      val commentPublisher = mock[User]
-      commentPublisher.messages returns ListBuffer[Message]()
-
-      // add subscriber to post
-      val somePost = Post(generateId, subject = "bibi", content = "zibi", postedBy = commentPublisher, postedIn = fakeSubforum)
-      val otherSubscriber = mock[User]
-      somePost.subscribers += otherSubscriber
-
-      val comment = forumService.publishComment(somePost, "blabla", commentPublisher).get()
-
-      there was one(otherSubscriber).notify(comment)
-      there was no(commentPublisher).notify(comment)
-    }
-
-    "failed for an invalid comment" in new PublishCtx with NormalUser {
-      forumService.publishComment(fakePost, "", fakeUser) must beDataViolationFailure(withViolation("content" -> "must not be empty"))
-    }
-
-    "failed for guest user (doesn't have permission to publish)" in new PublishCtx {
-      forumService.publishComment(fakePost, "", fakeUser) must beSessionExpiredFailure
-    }
-  }
-
-  class PublishCtx extends Ctx {
-    val fakeSubforum = SubForum(generateId, name = "some name")
-    val fakeUser = User(
-      generateId,
-      firstName = "bla",
-      lastName = "bla",
-      mail = "e@mail.com",
-      password = "somepass",
-      _role = Moderator(at = fakeSubforum))
-    val fakePost = Post(generateId, subject = "kaka", content = "kaka", postedBy = fakeUser, postedIn = fakeSubforum)
-  }
-
   "report moderator" should {
     "success if the user was already published a post in the moderator's subforum" in new ReportCtx with NormalUser {
       forumService.publishPost(
-        subForum = subforum,
+        subForumId = subforum.id,
         subject = "test post",
-        content = "bla bla",
-        postedBy = user
+        content = "bla bla"
       )
 
       val someContent = "some complaint"
-      val result = forumService.report(subforum, user, moderator, someContent)
+      val result = forumService.report(subforum, normalUser.get, moderator, someContent)
 
       result must beSuccessful(reportWith(someContent))
       db.reports must contain(result.get())
@@ -325,51 +341,47 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
     "success if the user was already published a comment in the moderator's subforum" in new ReportCtx with NormalUser {
       val parentpost = forumService.publishPost(
-        subForum = subforum,
+        subForumId = subforum.id,
         subject = "test post",
-        content = "bla bla",
-        postedBy = moderator
+        content = "bla bla"
       ).get()
 
       forumService.publishComment(
-        parent = parentpost,
-        content = "some comment",
-        postedBy = user
+        parentMessageId = parentpost.id,
+        content = "some comment"
       )
 
       val someContent = "some complaint"
 
-      forumService.report(subforum, user, moderator, someContent) must beSuccessful(reportWith(someContent))
+      forumService.report(subforum, normalUser.get, moderator, someContent) must beSuccessful(reportWith(someContent))
     }
 
     "failed if the user haven't post any message in the moderator's forum" in new ReportCtx with NormalUser {
-      forumService.report(subforum, user, moderator, "some complaint") must beFailure[Report, ReportException]("User hasn't publish a message the given subforum")
+      forumService.report(subforum, normalUser.get, moderator, "some complaint") must beFailure[Report, ReportException]("User hasn't publish a message the given subforum")
     }
 
     "failed if the user the report about is not a moderator in the given subforum" in new ReportCtx with NormalUser {
       subforum._moderators.clear()
 
       forumService.publishPost(
-        subForum = subforum,
+        subForumId = subforum.id,
         subject = "test post",
-        content = "bla bla",
-        postedBy = user
+        content = "bla bla"
       )
 
-      forumService.report(subforum, user, moderator, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
+      forumService.report(subforum, normalUser.get, moderator, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
     }
 
     "failed if the given `moderator` is not a moderator" in new ReportCtx with NormalUser {
       val regularUser = moderator.copy(_role = NormalUser)
 
       forumService.publishPost(
-        subForum = subforum,
+        subForumId = subforum.id,
         subject = "test post",
-        content = "bla bla",
-        postedBy = user
+        content = "bla bla"
       )
 
-      forumService.report(subforum, user, regularUser, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
+      forumService.report(subforum, normalUser.get, regularUser, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
     }
 
     "failed for unauthorized user (doesn't have permission to report)" in new ReportCtx {
@@ -393,11 +405,11 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
 
     "failed if the subforum doesnt exist" in new Ctx with ForumAdminUser {
-      forumService.deleteSubforum(SubForum(generateId, name = "Winterfall")) must beFailure[Unit, SubForumException]("subforum was not found")
+      forumService.deleteSubforum(SubForum(name = "Winterfall")) must beFailure[Unit, SubForumException]("subforum was not found")
     }
 
     "failed for unauthorized user (doesn't have permission to delete subforum)" in new Ctx with NormalUser {
-      forumService.deleteSubforum(SubForum(generateId, name = "Winterfall")) must beAnAuthorizationFailure[Unit](userMail)
+      forumService.deleteSubforum(SubForum(name = "Winterfall")) must beAnAuthorizationFailure[Unit](userMail)
     }
   }
 

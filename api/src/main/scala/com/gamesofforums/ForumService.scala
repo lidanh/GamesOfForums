@@ -23,7 +23,6 @@ class ForumService(forum: Forum,   // todo: remove forum
       if (db.users.exists(_.mail == mail)) throw RegistrationException("User already registered")
 
       val user = User(
-        id = generateId,
         firstName = firstName,
         lastName = lastName,
         mail = mail,
@@ -84,22 +83,26 @@ class ForumService(forum: Forum,   // todo: remove forum
   }
 
   // todo: remove postedby because we already have it implicitly
-  def publishPost(subForum: SubForum, subject: String, content: String, postedBy: User)(implicit user: Option[User] = None): Try[Post] = {
+  def publishPost(subForumId: Id, subject: String, content: String)(implicit user: Option[User] = None): Try[Post] = {
     Try {
-      val post = Post(
-        id = generateId,
-        subject = subject,
-        content = content,
-        postedBy = postedBy,
-        postedIn = subForum)
+      val subForum = db.subforums.find(_.id == subForumId).get
 
-      withPermission(Publish, post) {
+      withPermission(Publish) {
+        val loggedInUser = user.get // todo: fix
+
+        val post = Post(
+          id = generateId,
+          subject = subject,
+          content = content,
+          postedBy = loggedInUser,
+          postedIn = subForum)
+
         post.validate match {
           case Success => {
             db.messages += post
 
-            post.subscribers += postedBy
-            logger.info(s"${postedBy.mail} published a new post: ${post}")
+            post.subscribers += loggedInUser
+            logger.info(s"${loggedInUser.mail} published a new post: ${post}")
 
             post
           }
@@ -109,25 +112,29 @@ class ForumService(forum: Forum,   // todo: remove forum
     }
   }
 
-  def publishComment(parent: Message, content: String, postedBy: User)(implicit user: Option[User] = None): Try[Comment] = {
+  def publishComment(parentMessageId: Id, content: String)(implicit user: Option[User] = None): Try[Comment] = {
     Try {
-      val comment = Comment(
-        id = generateId,
-        content = content,
-        parent = parent,
-        postedBy = postedBy)
+      withPermission(Publish) {
+        val loggedInUser = user.get
 
-      withPermission(Publish, comment) {
+        val parent = db.messages.find(_.id == parentMessageId).get // todo: fix
+
+        val comment = Comment(
+          id = generateId,
+          content = content,
+          parent = parent,
+          postedBy = loggedInUser) // todo: fix
+
         comment.validate match {
           case Success => {
             db.messages += comment
             val rootPost = comment.rootPost
             // subscribe user
-            rootPost.subscribers += postedBy
+            rootPost.subscribers += loggedInUser
             // notify post subscribers
-            rootPost.subscribers.foreach(subscriber => if (subscriber != postedBy) subscriber.notify(comment))
+            rootPost.subscribers.foreach(subscriber => if (subscriber != loggedInUser) subscriber.notify(comment))
 
-            logger.info(s"${postedBy.mail} published a new comment: ${comment}")
+            logger.info(s"${loggedInUser.mail} published a new comment: ${comment}")
 
             comment
           }
