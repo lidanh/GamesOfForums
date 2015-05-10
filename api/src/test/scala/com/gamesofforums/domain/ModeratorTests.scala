@@ -8,8 +8,12 @@ import org.specs2.mutable.Specification
 class ModeratorTests extends Specification {
   "A moderator" should {
     "add itself to the subforum's moderators upon initialization" in {
-      val user = User("kuki", "buki", "test@mail.com", "1234")
-      val subforum = SubForum("some forum")
+      val user = User(
+        firstName = "kuki",
+        lastName = "buki",
+        mail = "test@mail.com",
+        password = "1234")
+      val subforum = SubForum(name = "some forum")
 
       user is Moderator(at = subforum)
 

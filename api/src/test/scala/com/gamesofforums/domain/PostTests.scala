@@ -10,9 +10,18 @@ import org.specs2.specification.Scope
 class PostTests extends Specification with ResultMatchers {
 
   trait PostCtx extends Scope {
-    val subforum = SubForum("some forum")
-    val fakeUser = User("bibi", "buzi", "some@mail.com", "1234", Moderator(at = subforum))
-    val validPost = Post("some subject", "some content", fakeUser, subforum)
+    val subforum = SubForum(name = "some forum")
+    val fakeUser = User(
+      firstName = "bibi",
+      lastName = "buzi",
+      mail = "some@mail.com",
+      password = "1234",
+      _role = Moderator(at = subforum))
+    val validPost = Post(
+      subject = "some subject",
+      content = "some content",
+      postedBy = fakeUser,
+      postedIn = subforum)
   }
 
   "Post" should {
@@ -37,8 +46,8 @@ class PostTests extends Specification with ResultMatchers {
 
   "Delete post comments" should {
     "remove all the post's comments successfully" in new PostCtx {
-      val level1 = Comment("level1", validPost, fakeUser)
-      val level2 = Comment("level2", level1, fakeUser)
+      val level1 = Comment(content = "level1", parent = validPost, postedBy = fakeUser)
+      val level2 = Comment(content = "level2", parent = level1, postedBy = fakeUser)
 
       validPost.removeComments()
 
@@ -48,8 +57,8 @@ class PostTests extends Specification with ResultMatchers {
     }
 
     "remove all the post's comments from the subforum messages" in new PostCtx {
-      val level1 = Comment("level1", validPost, fakeUser)
-      val level2 = Comment("level2", level1, fakeUser)
+      val level1 = Comment(content = "level1", parent = validPost, postedBy = fakeUser)
+      val level2 = Comment(content = "level2", parent = level1, postedBy = fakeUser)
 
       validPost.removeComments()
 

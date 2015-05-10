@@ -6,7 +6,10 @@ import com.wix.accord.dsl.{validator => accordValidator, _}
 /**
  * Created by Guy Gonen on 08/04/2015.
  */
-case class Comment(override val content: String, parent: Message, override val postedBy: User) extends Message(content, postedBy) {
+case class Comment(override val id: Option[Id] = None,
+                   override val content: String,
+                   parent: Message,
+                   override val postedBy: User) extends Message(id, content, postedBy) {
   override val validator: Validator[Comment] = Comment.validator
 }
 

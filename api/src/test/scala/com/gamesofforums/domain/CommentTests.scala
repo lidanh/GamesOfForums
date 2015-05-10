@@ -9,9 +9,17 @@ import org.specs2.specification.Scope
  */
 class CommentTests extends Specification with ResultMatchers {
   trait CommentCtx extends Scope {
-    val fakeUser = User("fakename", "fakename", "some@mail.com", "pass")
-    val subforum = SubForum("some forum")
-    val post = Post("some subject", "some content", fakeUser, subforum)
+    val fakeUser = User(
+      firstName = "fakename",
+      lastName = "fakename",
+      mail = "some@mail.com",
+      password = "pass")
+    val subforum = SubForum(name = "some forum")
+    val post = Post(
+      subject = "some subject",
+      content = "some content",
+      postedBy = fakeUser,
+      postedIn = subforum)
     val validComment = Comment(
       content = "some content",
       parent = post,
@@ -46,8 +54,14 @@ class CommentTests extends Specification with ResultMatchers {
 
   "Delete comment comments" should {
     "remove all the comment's comments successfully" in new CommentCtx {
-      val level1 = Comment("level1", validComment, fakeUser)
-      val level2 = Comment("level2", level1, fakeUser)
+      val level1 = Comment(
+        content = "level1",
+        parent = validComment,
+        postedBy = fakeUser)
+      val level2 = Comment(
+        content = "level2",
+        parent = level1,
+        postedBy = fakeUser)
 
       validComment.removeComments()
 
@@ -57,8 +71,14 @@ class CommentTests extends Specification with ResultMatchers {
     }
 
     "remove all the comment's comments from the root post subforum's messages" in new CommentCtx {
-      val level1 = Comment("level1", validComment, fakeUser)
-      val level2 = Comment("level2", level1, fakeUser)
+      val level1 = Comment(
+        content = "level1",
+        parent = validComment,
+        postedBy = fakeUser)
+      val level2 = Comment(
+        content = "level2",
+        parent = level1,
+        postedBy = fakeUser)
 
       validComment.removeComments()
 

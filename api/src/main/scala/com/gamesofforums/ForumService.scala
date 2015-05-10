@@ -23,8 +23,8 @@ class ForumService(forum: Forum,   // todo: remove forum
       if (db.users.exists(_.mail == mail)) throw RegistrationException("User already registered")
 
       val user = User(
-        firstName,
-        lastName,
+        firstName = firstName,
+        lastName = lastName,
         mail = mail,
         password = passwordHasher.hash(password),
         _role = NormalUser,
@@ -67,7 +67,7 @@ class ForumService(forum: Forum,   // todo: remove forum
   def createSubforum(name: String, moderators: Seq[String])(implicit user: Option[User] = None): Try[SubForum] = {
     Try {
       withPermission(ManageSubForums) {
-        val subForum = SubForum(name)
+        val subForum = SubForum(name = name)
         db.users.filter(u => moderators.contains(u.mail)).foreach(u => u is Moderator(subForum))
 
         subForum.validate(forum.policy) match {
@@ -85,7 +85,11 @@ class ForumService(forum: Forum,   // todo: remove forum
   // todo: remove postedby because we already have it implicitly
   def publishPost(subForum: SubForum, subject: String, content: String, postedBy: User)(implicit user: Option[User] = None): Try[Post] = {
     Try {
-      val post = Post(subject, content, postedBy, subForum)
+      val post = Post(
+        subject = subject,
+        content = content,
+        postedBy = postedBy,
+        postedIn = subForum)
 
       withPermission(Publish, post) {
         post.validate match {
@@ -105,7 +109,10 @@ class ForumService(forum: Forum,   // todo: remove forum
 
   def publishComment(parent: Message, content: String, postedBy: User)(implicit user: Option[User] = None): Try[Comment] = {
     Try {
-      val comment = Comment(content, parent, postedBy)
+      val comment = Comment(
+        content = content,
+        parent = parent,
+        postedBy = postedBy)
 
       withPermission(Publish, comment) {
         comment.validate match {

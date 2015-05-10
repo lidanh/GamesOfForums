@@ -9,7 +9,11 @@ import org.specs2.specification.Scope
  */
 class UserTests extends Specification with ResultMatchers {
   trait Ctx extends Scope {
-    val validUser = User("bibi", "buzi", "someone@gmail.com", "1234")
+    val validUser = User(
+      firstName = "bibi",
+      lastName = "buzi",
+      mail = "someone@gmail.com",
+      password = "1234")
   }
   
   "User" should {
@@ -52,8 +56,8 @@ class UserTests extends Specification with ResultMatchers {
     }
 
     "moderate the forums of the new role with the previous one, if both of them are moderation" in new Ctx {
-      val subforum1 = SubForum("sf1")
-      val subforum2 = SubForum("sf2")
+      val subforum1 = SubForum(name = "sf1")
+      val subforum2 = SubForum(name = "sf2")
 
       validUser is Moderator(subforum1)
       validUser is Moderator(subforum2)

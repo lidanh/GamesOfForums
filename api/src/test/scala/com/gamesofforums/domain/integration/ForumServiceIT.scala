@@ -72,12 +72,22 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
   trait ForumAdminUser extends Scope {
     val userMail = "ad@min.com"
-    implicit val adminUser = Some(User("some admin", "some admin", userMail, "****", ForumAdmin))
+    implicit val adminUser = Some(User(
+      firstName = "some admin",
+      lastName = "some admin",
+      mail = userMail,
+      password = "****",
+      _role = ForumAdmin))
   }
 
   trait NormalUser extends Scope {
     val userMail = "u@ser.com"
-    implicit val normalUser = Some(User("some user", "some user", userMail, "$$", NormalUser))
+    implicit val normalUser = Some(User(
+      firstName = "some user",
+      lastName = "some user",
+      mail = userMail,
+      password = "$$",
+      _role = NormalUser))
   }
 
   "Forum initialization" should {
@@ -199,9 +209,18 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   }
 
   trait ReportCtx extends Ctx {
-    val user = User("some normal user", "blabla", "test@user.com", "1234")
-    val subforum = SubForum("some forum")
-    val moderator = User("some moderator", "kuki", "mod@erator.com", "0000", Moderator(at = subforum))
+    val user = User(
+      firstName = "some normal user",
+      lastName = "blabla",
+      mail = "test@user.com",
+      password = "1234")
+    val subforum = SubForum(name = "some forum")
+    val moderator = User(
+      firstName = "some moderator",
+      lastName = "kuki",
+      mail = "mod@erator.com",
+      password = "0000",
+      _role = Moderator(at = subforum))
   }
 
   "Publish post" should {
@@ -253,7 +272,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       commentPublisher.messages returns ListBuffer[Message]()
 
       // add subscriber to post
-      val somePost = Post("bibi", "zibi", commentPublisher, fakeSubforum)
+      val somePost = Post(subject = "bibi", content = "zibi", postedBy = commentPublisher, postedIn = fakeSubforum)
       val otherSubscriber = mock[User]
       somePost.subscribers += otherSubscriber
 
@@ -273,9 +292,14 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   }
 
   class PublishCtx extends Ctx {
-    val fakeSubforum = SubForum("some name")
-    val fakeUser = User("bla", "bla", "e@mail.com", "somepass", Moderator(at = fakeSubforum))
-    val fakePost = Post("kaka", "kaka", fakeUser, fakeSubforum)
+    val fakeSubforum = SubForum(name = "some name")
+    val fakeUser = User(
+      firstName = "bla",
+      lastName = "bla",
+      mail = "e@mail.com",
+      password = "somepass",
+      _role = Moderator(at = fakeSubforum))
+    val fakePost = Post(subject = "kaka", content = "kaka", postedBy = fakeUser, postedIn = fakeSubforum)
   }
 
   "report moderator" should {
@@ -351,7 +375,11 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   "subforum deletion" should {
     "success if the subforum exists" in new Ctx with ForumAdminUser {
       val moderatorMail = "some@moderator.com"
-      db.users += User("bibi", "bugi", moderatorMail, "1234")
+      db.users += User(
+        firstName = "bibi",
+        lastName = "bugi",
+        mail = moderatorMail,
+        password = "1234")
       val deletedSubforum = forumService.createSubforum("someLand", Seq(moderatorMail)).get()
 
       forumService.deleteSubforum(deletedSubforum) must beSuccessful[Unit]
@@ -359,11 +387,11 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
 
     "failed if the subforum doesnt exist" in new Ctx with ForumAdminUser {
-      forumService.deleteSubforum(SubForum("Winterfall")) must beFailure[Unit, SubForumException]("subforum was not found")
+      forumService.deleteSubforum(SubForum(name = "Winterfall")) must beFailure[Unit, SubForumException]("subforum was not found")
     }
 
     "failed for unauthorized user (doesn't have permission to delete subforum)" in new Ctx with NormalUser {
-      forumService.deleteSubforum(SubForum("Winterfall")) must beAnAuthorizationFailure[Unit](userMail)
+      forumService.deleteSubforum(SubForum(name = "Winterfall")) must beAnAuthorizationFailure[Unit](userMail)
     }
   }
 

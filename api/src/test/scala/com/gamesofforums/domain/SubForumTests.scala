@@ -10,8 +10,13 @@ import org.specs2.specification.Scope
  */
 class SubForumTests extends Specification with ResultMatchers {
   trait Ctx extends Scope {
-    val validSubforum = SubForum("some name")
-    val moderator = User("bibi", "buzi", "someone@gmail.com", "1234", Moderator(at = validSubforum))
+    val validSubforum = SubForum(name = "some name")
+    val moderator = User(
+      firstName = "bibi",
+      lastName = "buzi",
+      mail = "someone@gmail.com",
+      password = "1234",
+      _role = Moderator(at = validSubforum))
     val minModerators = 1
     val maxModerators = 3
     val defaultPolicy = ForumPolicy(minModerators = minModerators, maxModerators = maxModerators)
@@ -36,7 +41,12 @@ class SubForumTests extends Specification with ResultMatchers {
 
     "be invalid when moderators num doesn't meet the policy" in new Ctx {
       val somePolicy = ForumPolicy(minModerators = 1, maxModerators = 1)
-      val anotherModerator = User("azzam", "azzam", "az@zam.com", "1234", Moderator(at = validSubforum))
+      val anotherModerator = User(
+        firstName = "azzam",
+        lastName = "azzam",
+        mail = "az@zam.com",
+        password = "1234",
+        _role = Moderator(at = validSubforum))
 
       validSubforum.validate(somePolicy) should
         failWith("moderators count" -> "got 2, expected between 1 and 1")

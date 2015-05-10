@@ -6,7 +6,10 @@ import com.wix.accord.dsl.{validator => accordValidator, _}
 /**
  * Created by lidanh on 4/25/15.
  */
-case class Report(reportedUser: User, otherUser: User, content: String) extends ValidationSupport {
+case class Report(id: Option[Id] = None,
+                  reportedUser: User,
+                  otherUser: User,
+                  content: String) extends ValidationSupport {
   override val validator: Validator[Report] = Report.validator
 }
 
