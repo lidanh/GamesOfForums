@@ -10,12 +10,14 @@ import org.specs2.specification.Scope
 trait RolesSharedTests { this: Specification with ForumMatchers =>
   trait Ctx extends Scope {
     implicit val user = User(
+      generateId,
       firstName = "kuki",
       lastName = "buki",
       mail = "some@email.com",
       password = "somePass")
 
     val otherUser = User(
+      generateId,
       firstName = "bibi",
       lastName = "buzi",
       mail = "bib@i.com",

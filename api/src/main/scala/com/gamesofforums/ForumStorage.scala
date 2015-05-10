@@ -16,7 +16,7 @@ trait ForumStorage {
 }
 
 class InMemoryStorage extends ForumStorage {
-  override val subforums = new ListBuffer[SubForum]()
+  override val subforums = ListBuffer[SubForum]()
   override val users = ListBuffer[User]()
   override val reports = ListBuffer[Report]()
   override val messages =  new mutable.UnrolledBuffer[Message]() {

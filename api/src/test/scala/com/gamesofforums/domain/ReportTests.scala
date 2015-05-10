@@ -8,18 +8,21 @@ import org.specs2.mutable.Specification
  */
 class ReportTests extends Specification with ResultMatchers {
   val user = User(
+    generateId,
     firstName = "bibi",
     lastName = "buzi",
     mail = "bibi@buzi.com",
     password = "1234")
-  val subforum = SubForum(name = "test")
+  val subforum = SubForum(generateId, name = "test")
   val otherUser = User(
+    generateId,
     firstName = "bugi",
     lastName = "kuki",
     mail = "bugi@kuki.com",
     password = "0000",
     _role = Moderator(at = subforum))
   val validReport = Report(
+    generateId,
     reportedUser = user,
     otherUser = otherUser,
     content = "some report")

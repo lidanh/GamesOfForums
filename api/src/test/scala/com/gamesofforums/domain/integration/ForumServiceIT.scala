@@ -73,6 +73,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   trait ForumAdminUser extends Scope {
     val userMail = "ad@min.com"
     implicit val adminUser = Some(User(
+      generateId,
       firstName = "some admin",
       lastName = "some admin",
       mail = userMail,
@@ -83,6 +84,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   trait NormalUser extends Scope {
     val userMail = "u@ser.com"
     implicit val normalUser = Some(User(
+      generateId,
       firstName = "some user",
       lastName = "some user",
       mail = userMail,
@@ -210,12 +212,14 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
   trait ReportCtx extends Ctx {
     val user = User(
+      generateId,
       firstName = "some normal user",
       lastName = "blabla",
       mail = "test@user.com",
       password = "1234")
-    val subforum = SubForum(name = "some forum")
+    val subforum = SubForum(generateId, name = "some forum")
     val moderator = User(
+      generateId,
       firstName = "some moderator",
       lastName = "kuki",
       mail = "mod@erator.com",
@@ -272,7 +276,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       commentPublisher.messages returns ListBuffer[Message]()
 
       // add subscriber to post
-      val somePost = Post(subject = "bibi", content = "zibi", postedBy = commentPublisher, postedIn = fakeSubforum)
+      val somePost = Post(generateId, subject = "bibi", content = "zibi", postedBy = commentPublisher, postedIn = fakeSubforum)
       val otherSubscriber = mock[User]
       somePost.subscribers += otherSubscriber
 
@@ -292,14 +296,15 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   }
 
   class PublishCtx extends Ctx {
-    val fakeSubforum = SubForum(name = "some name")
+    val fakeSubforum = SubForum(generateId, name = "some name")
     val fakeUser = User(
+      generateId,
       firstName = "bla",
       lastName = "bla",
       mail = "e@mail.com",
       password = "somepass",
       _role = Moderator(at = fakeSubforum))
-    val fakePost = Post(subject = "kaka", content = "kaka", postedBy = fakeUser, postedIn = fakeSubforum)
+    val fakePost = Post(generateId, subject = "kaka", content = "kaka", postedBy = fakeUser, postedIn = fakeSubforum)
   }
 
   "report moderator" should {
@@ -376,6 +381,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     "success if the subforum exists" in new Ctx with ForumAdminUser {
       val moderatorMail = "some@moderator.com"
       db.users += User(
+        generateId,
         firstName = "bibi",
         lastName = "bugi",
         mail = moderatorMail,
@@ -387,11 +393,11 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
 
     "failed if the subforum doesnt exist" in new Ctx with ForumAdminUser {
-      forumService.deleteSubforum(SubForum(name = "Winterfall")) must beFailure[Unit, SubForumException]("subforum was not found")
+      forumService.deleteSubforum(SubForum(generateId, name = "Winterfall")) must beFailure[Unit, SubForumException]("subforum was not found")
     }
 
     "failed for unauthorized user (doesn't have permission to delete subforum)" in new Ctx with NormalUser {
-      forumService.deleteSubforum(SubForum(name = "Winterfall")) must beAnAuthorizationFailure[Unit](userMail)
+      forumService.deleteSubforum(SubForum(generateId, name = "Winterfall")) must beAnAuthorizationFailure[Unit](userMail)
     }
   }
 

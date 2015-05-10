@@ -9,11 +9,12 @@ class ModeratorTests extends Specification {
   "A moderator" should {
     "add itself to the subforum's moderators upon initialization" in {
       val user = User(
+        generateId,
         firstName = "kuki",
         lastName = "buki",
         mail = "test@mail.com",
         password = "1234")
-      val subforum = SubForum(name = "some forum")
+      val subforum = SubForum(generateId, name = "some forum")
 
       user is Moderator(at = subforum)
 

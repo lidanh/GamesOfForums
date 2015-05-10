@@ -10,8 +10,9 @@ import org.specs2.specification.Scope
  */
 class SubForumTests extends Specification with ResultMatchers {
   trait Ctx extends Scope {
-    val validSubforum = SubForum(name = "some name")
+    val validSubforum = SubForum(generateId, name = "some name")
     val moderator = User(
+      generateId,
       firstName = "bibi",
       lastName = "buzi",
       mail = "someone@gmail.com",
@@ -42,6 +43,7 @@ class SubForumTests extends Specification with ResultMatchers {
     "be invalid when moderators num doesn't meet the policy" in new Ctx {
       val somePolicy = ForumPolicy(minModerators = 1, maxModerators = 1)
       val anotherModerator = User(
+        generateId,
         firstName = "azzam",
         lastName = "azzam",
         mail = "az@zam.com",

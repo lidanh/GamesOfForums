@@ -23,6 +23,7 @@ class ForumService(forum: Forum,   // todo: remove forum
       if (db.users.exists(_.mail == mail)) throw RegistrationException("User already registered")
 
       val user = User(
+        id = generateId,
         firstName = firstName,
         lastName = lastName,
         mail = mail,
@@ -67,12 +68,12 @@ class ForumService(forum: Forum,   // todo: remove forum
   def createSubforum(name: String, moderators: Seq[String])(implicit user: Option[User] = None): Try[SubForum] = {
     Try {
       withPermission(ManageSubForums) {
-        val subForum = SubForum(name = name)
+        val subForum = SubForum(id = generateId, name = name)
         db.users.filter(u => moderators.contains(u.mail)).foreach(u => u is Moderator(subForum))
 
         subForum.validate(forum.policy) match {
           case Success => {
-            db.subforums += subForum
+            val newSubforum = db.subforums += subForum
             logger.info(s"Subforum ${subForum} has created successfully.")
             subForum
           }
@@ -86,6 +87,7 @@ class ForumService(forum: Forum,   // todo: remove forum
   def publishPost(subForum: SubForum, subject: String, content: String, postedBy: User)(implicit user: Option[User] = None): Try[Post] = {
     Try {
       val post = Post(
+        id = generateId,
         subject = subject,
         content = content,
         postedBy = postedBy,
@@ -110,6 +112,7 @@ class ForumService(forum: Forum,   // todo: remove forum
   def publishComment(parent: Message, content: String, postedBy: User)(implicit user: Option[User] = None): Try[Comment] = {
     Try {
       val comment = Comment(
+        id = generateId,
         content = content,
         parent = parent,
         postedBy = postedBy)
@@ -146,6 +149,7 @@ class ForumService(forum: Forum,   // todo: remove forum
           throw new ReportException("The given moderator is not a moderator in the given subforum")
 
         val report = Report(
+          id = generateId,
           reportedUser = reportedUser,
           otherUser = moderator,
           content = reportContent)

@@ -10,17 +10,20 @@ import org.specs2.specification.Scope
 class CommentTests extends Specification with ResultMatchers {
   trait CommentCtx extends Scope {
     val fakeUser = User(
+      generateId,
       firstName = "fakename",
       lastName = "fakename",
       mail = "some@mail.com",
       password = "pass")
-    val subforum = SubForum(name = "some forum")
+    val subforum = SubForum(generateId, name = "some forum")
     val post = Post(
+      generateId,
       subject = "some subject",
       content = "some content",
       postedBy = fakeUser,
       postedIn = subforum)
     val validComment = Comment(
+      generateId,
       content = "some content",
       parent = post,
       postedBy = fakeUser)
@@ -39,9 +42,11 @@ class CommentTests extends Specification with ResultMatchers {
   "Comment.root" should {
     "return the root post of the comment" in new CommentCtx {
       val comment = Comment(
+        generateId,
         content = "level 3",
         postedBy = fakeUser,
         parent = Comment(
+          generateId,
           content = "level 2",
           postedBy = fakeUser,
           parent = post
@@ -55,10 +60,12 @@ class CommentTests extends Specification with ResultMatchers {
   "Delete comment comments" should {
     "remove all the comment's comments successfully" in new CommentCtx {
       val level1 = Comment(
+        generateId,
         content = "level1",
         parent = validComment,
         postedBy = fakeUser)
       val level2 = Comment(
+        generateId,
         content = "level2",
         parent = level1,
         postedBy = fakeUser)
@@ -72,10 +79,12 @@ class CommentTests extends Specification with ResultMatchers {
 
     "remove all the comment's comments from the root post subforum's messages" in new CommentCtx {
       val level1 = Comment(
+        generateId,
         content = "level1",
         parent = validComment,
         postedBy = fakeUser)
       val level2 = Comment(
+        generateId,
         content = "level2",
         parent = level1,
         postedBy = fakeUser)

@@ -6,7 +6,7 @@ import com.wix.accord.dsl.{validator => accordValidator, _}
 /**
  * Created by lidanh on 4/25/15.
  */
-case class Report(id: Option[Id] = None,
+case class Report(id: Id = generateId,
                   reportedUser: User,
                   otherUser: User,
                   content: String) extends ValidationSupport {
