@@ -28,7 +28,7 @@ case class User(firstName: String,
   def is(newRole: Role) = {
     if (role.isInstanceOf[Moderator] && newRole.isInstanceOf[Moderator]) {
       // mix the forums the user moderates
-            _role = Moderator(this.role.asInstanceOf[Moderator].at ++ newRole.asInstanceOf[Moderator].at)
+      _role = Moderator(this.role.asInstanceOf[Moderator].at ++ newRole.asInstanceOf[Moderator].at)
     } else {
       _role = newRole
     }

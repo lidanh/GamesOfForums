@@ -32,6 +32,7 @@ class InMemoryStorage extends ForumStorage {
 
       result
     }
+    
     override def -=(x: Message): this.type = super.-=(x)
   }
 }
