@@ -218,29 +218,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
   }
 
-  trait ReportCtx extends Ctx {
-    val user = User(
-      generateId,
-      firstName = "some normal user",
-      lastName = "blabla",
-      mail = "test@user.com",
-      password = "1234")
-    db.users += user
-
-    val subforum = SubForum(generateId, name = "some forum")
-    db.subforums += subforum
-
-    val moderator = User(
-      generateId,
-      firstName = "some moderator",
-      lastName = "kuki",
-      mail = "mod@erator.com",
-      password = "0000",
-      _role = Moderator(at = subforum))
-    db.users += moderator
-  }
-
-  class PublishCtx extends Ctx {
+  trait PublishCtx extends Ctx {
     val fakeSubforum = SubForum(name = "some name")
     db.subforums += fakeSubforum
 
@@ -278,9 +256,20 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         beDataViolationFailure(withViolation("subject" -> "must not be empty"))
     }
 
+    "failed for unknown subforum" in new PublishCtx with NormalUser {
+      val unknownSubforum = SubForum(name = "unknown")
+      forumService.publishPost(unknownSubforum.id, subject = "blabla", content = "blabl") must
+        beFailure[Post, ObjectNotFoundException](contain(unknownSubforum.id))
+    }
+
     "failed for guest user (doesn't have permission to publish)" in new PublishCtx {
       forumService.publishPost(fakeSubforum.id, subject = "", "kukibuki") must beSessionExpiredFailure
     }
+  }
+
+  trait PublishCommentCtx extends PublishCtx {
+    val fakePost = Post(subject = "kaka", content = "kaka", postedBy = fakeUser, postedIn = fakeSubforum)
+    db.messages += fakePost
   }
 
   "Publish comment" should {
@@ -317,14 +306,38 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       forumService.publishComment(fakePost.id, "") must beDataViolationFailure(withViolation("content" -> "must not be empty"))
     }
 
+    "failed for unknown post" in new PublishCommentCtx with NormalUser {
+      val unknownPost = Post(subject = "blabla", content = "blabla", postedBy = normalUser.get, postedIn = fakeSubforum)
+
+      forumService.publishComment(unknownPost.id, content = "blabla") must
+        beFailure[Comment, ObjectNotFoundException](contain(unknownPost.id))
+    }
+
     "failed for guest user (doesn't have permission to publish)" in new PublishCommentCtx {
       forumService.publishComment(fakePost.id, "") must beSessionExpiredFailure
     }
   }
 
-  class PublishCommentCtx extends PublishCtx {
-    val fakePost = Post(generateId, subject = "kaka", content = "kaka", postedBy = fakeUser, postedIn = fakeSubforum)
-    db.messages += fakePost
+  trait ReportCtx extends Ctx {
+    val user = User(
+      generateId,
+      firstName = "some normal user",
+      lastName = "blabla",
+      mail = "test@user.com",
+      password = "1234")
+    db.users += user
+
+    val subforum = SubForum(generateId, name = "some forum")
+    db.subforums += subforum
+
+    val moderator = User(
+      generateId,
+      firstName = "some moderator",
+      lastName = "kuki",
+      mail = "mod@erator.com",
+      password = "0000",
+      _role = Moderator(at = subforum))
+    db.users += moderator
   }
 
   "report moderator" should {

@@ -17,6 +17,13 @@ class ForumService(forum: Forum,   // todo: remove forum
                    passwordHasher: PasswordHasher = SHA1Hash,
                    mailService: MailService) extends AuthorizationSupport with LazyLogging {
 
+  def getValue[T](obj: Option[T], id: Id): T = {
+    obj match {
+      case Some(t) => t
+      case _ => throw new ObjectNotFoundException(id)
+    }
+  }
+
   def register(firstName: String, lastName: String, mail: String, password: String): Try[User] = {
     Try {
       // check duplication
@@ -82,10 +89,9 @@ class ForumService(forum: Forum,   // todo: remove forum
     }
   }
 
-  // todo: remove postedby because we already have it implicitly
   def publishPost(subForumId: Id, subject: String, content: String)(implicit user: Option[User] = None): Try[Post] = {
     Try {
-      val subForum = db.subforums.find(_.id == subForumId).get
+      val subForum = getValue(db.subforums.find(_.id == subForumId), subForumId)
 
       withPermission(Publish) {
         val loggedInUser = user.get // todo: fix
@@ -117,7 +123,7 @@ class ForumService(forum: Forum,   // todo: remove forum
       withPermission(Publish) {
         val loggedInUser = user.get
 
-        val parent = db.messages.find(_.id == parentMessageId).get // todo: fix
+        val parent = getValue(db.messages.find(_.id == parentMessageId), parentMessageId)
 
         val comment = Comment(
           id = generateId,
