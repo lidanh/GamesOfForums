@@ -90,8 +90,8 @@ class ForumService(forum: Forum,   // todo: remove forum
       withPermission(Publish, post) {
         post.validate match {
           case Success => {
-            subForum.messages += post
-            postedBy.messages += post
+            db.messages += post
+
             post.subscribers += postedBy
             logger.info(s"${postedBy.mail} published a new post: ${post}")
 

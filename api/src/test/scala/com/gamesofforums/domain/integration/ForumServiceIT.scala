@@ -202,7 +202,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         content = ===(someContent),
         postedBy = ===(fakeUser),
         subscribers = contain(fakeUser)))
+
       fakeSubforum.messages must contain(result.get())
+      fakeUser.messages must contain(result.get())
+      db.messages must contain(result.get())
     }
 
     "add the published post to the user's posts" in new PublishCtx with NormalUser {
