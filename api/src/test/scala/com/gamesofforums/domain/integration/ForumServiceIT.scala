@@ -81,7 +81,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       _role = ForumAdmin))
   }
 
-  trait NormalUser extends Scope {
+  trait NormalUser extends Ctx {
     val userMail = "u@ser.com"
     implicit val normalUser = Some(User(
       firstName = "some user",
@@ -89,6 +89,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       mail = userMail,
       password = "$$",
       _role = NormalUser))
+    db.users += normalUser.get
   }
 
   "Forum initialization" should {
@@ -217,6 +218,28 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
   }
 
+  trait ReportCtx extends Ctx {
+    val user = User(
+      generateId,
+      firstName = "some normal user",
+      lastName = "blabla",
+      mail = "test@user.com",
+      password = "1234")
+    db.users += user
+
+    val subforum = SubForum(generateId, name = "some forum")
+    db.subforums += subforum
+
+    val moderator = User(
+      generateId,
+      firstName = "some moderator",
+      lastName = "kuki",
+      mail = "mod@erator.com",
+      password = "0000",
+      _role = Moderator(at = subforum))
+    db.users += moderator
+  }
+
   class PublishCtx extends Ctx {
     val fakeSubforum = SubForum(name = "some name")
     db.subforums += fakeSubforum
@@ -228,11 +251,6 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       mail = "e@mail.com",
       password = "somepass",
       _role = Moderator(at = fakeSubforum))
-  }
-
-  class PublishCommentCtx extends PublishCtx {
-    val fakePost = Post(generateId, subject = "kaka", content = "kaka", postedBy = fakeUser, postedIn = fakeSubforum)
-    db.messages += fakePost
   }
 
   "Publish post" should {
@@ -304,24 +322,9 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
   }
 
-  trait ReportCtx extends Ctx {
-    val user = User(
-      generateId,
-      firstName = "some normal user",
-      lastName = "blabla",
-      mail = "test@user.com",
-      password = "1234")
-
-    val subforum = SubForum(generateId, name = "some forum")
-    db.subforums += subforum
-
-    val moderator = User(
-      generateId,
-      firstName = "some moderator",
-      lastName = "kuki",
-      mail = "mod@erator.com",
-      password = "0000",
-      _role = Moderator(at = subforum))
+  class PublishCommentCtx extends PublishCtx {
+    val fakePost = Post(generateId, subject = "kaka", content = "kaka", postedBy = fakeUser, postedIn = fakeSubforum)
+    db.messages += fakePost
   }
 
   "report moderator" should {
@@ -333,7 +336,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       )
 
       val someContent = "some complaint"
-      val result = forumService.report(subforum, normalUser.get, moderator, someContent)
+      val result = forumService.report(subforum.id, moderator.id, someContent)
 
       result must beSuccessful(reportWith(someContent))
       db.reports must contain(result.get())
@@ -353,11 +356,11 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
       val someContent = "some complaint"
 
-      forumService.report(subforum, normalUser.get, moderator, someContent) must beSuccessful(reportWith(someContent))
+      forumService.report(subforum.id, moderator.id, someContent) must beSuccessful(reportWith(someContent))
     }
 
     "failed if the user haven't post any message in the moderator's forum" in new ReportCtx with NormalUser {
-      forumService.report(subforum, normalUser.get, moderator, "some complaint") must beFailure[Report, ReportException]("User hasn't publish a message the given subforum")
+      forumService.report(subforum.id, moderator.id, "some complaint") must beFailure[Report, ReportException]("User hasn't publish a message the given subforum")
     }
 
     "failed if the user the report about is not a moderator in the given subforum" in new ReportCtx with NormalUser {
@@ -369,11 +372,12 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         content = "bla bla"
       )
 
-      forumService.report(subforum, normalUser.get, moderator, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
+      forumService.report(subforum.id, moderator.id, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
     }
 
     "failed if the given `moderator` is not a moderator" in new ReportCtx with NormalUser {
-      val regularUser = moderator.copy(_role = NormalUser)
+      val regularUser = moderator.copy(id = generateId, _role = NormalUser)
+      db.users += regularUser
 
       forumService.publishPost(
         subForumId = subforum.id,
@@ -381,11 +385,11 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         content = "bla bla"
       )
 
-      forumService.report(subforum, normalUser.get, regularUser, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
+      forumService.report(subforum.id, regularUser.id, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
     }
 
     "failed for unauthorized user (doesn't have permission to report)" in new ReportCtx {
-      forumService.report(subforum, user, moderator, "blabla") must beSessionExpiredFailure
+      forumService.report(subforum.id, moderator.id, "blabla") must beSessionExpiredFailure
     }
   }
 
@@ -400,16 +404,16 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         password = "1234")
       val deletedSubforum = forumService.createSubforum("someLand", Seq(moderatorMail)).get()
 
-      forumService.deleteSubforum(deletedSubforum) must beSuccessful[Unit]
+      forumService.deleteSubforum(deletedSubforum.id) must beSuccessful[Unit]
       db.subforums must not(contain(deletedSubforum))
     }
 
     "failed if the subforum doesnt exist" in new Ctx with ForumAdminUser {
-      forumService.deleteSubforum(SubForum(name = "Winterfall")) must beFailure[Unit, SubForumException]("subforum was not found")
+      forumService.deleteSubforum(SubForum(name = "Winterfall").id) must beFailure[Unit, SubForumException]("subforum was not found")
     }
 
     "failed for unauthorized user (doesn't have permission to delete subforum)" in new Ctx with NormalUser {
-      forumService.deleteSubforum(SubForum(name = "Winterfall")) must beAnAuthorizationFailure[Unit](userMail)
+      forumService.deleteSubforum(SubForum(name = "Winterfall").id) must beAnAuthorizationFailure[Unit](userMail)
     }
   }
 

@@ -144,9 +144,13 @@ class ForumService(forum: Forum,   // todo: remove forum
     }
   }
 
-  def report(subforum: SubForum, reportedUser: User, moderator: User, reportContent: String)(implicit user: Option[User] = None): Try[Report] = {
+  def report(subforumId: Id, moderatorId: Id, reportContent: String)(implicit user: Option[User] = None): Try[Report] = {
     Try {
+      val subforum = db.subforums.find(_.id == subforumId).get // todo:fix
+      val moderator = db.users.find(_.id == moderatorId).get // todo: fix
+
       withPermission(ReportUsers) {
+        val reportedUser = user.get
         // validate that the reported user has already posted in the given subforum
         if (!subforum.messages.exists(m => m.postedBy == reportedUser))
           throw new ReportException("User hasn't publish a message the given subforum")
@@ -172,13 +176,12 @@ class ForumService(forum: Forum,   // todo: remove forum
     }
   }
 
-  def deleteSubforum(subforum: SubForum)(implicit user: Option[User] = None): Try[Unit] = {
+  def deleteSubforum(subforumId: Id)(implicit user: Option[User] = None): Try[Unit] = {
     Try {
       withPermission(ManageSubForums) {
-        if (db.subforums.contains(subforum)) {
-          db.subforums -= subforum
-        } else {
-          throw new SubForumException("subforum was not found")
+        db.subforums.find(_.id == subforumId) match {
+          case Some(s) => db.subforums -= s
+          case _ => throw new SubForumException("subforum was not found")
         }
       }
     }
