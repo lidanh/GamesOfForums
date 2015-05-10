@@ -9,7 +9,6 @@ import com.typesafe.scalalogging.LazyLogging
  * Created by lidanh on 4/24/15.
  */
 trait AuthorizationSupport { this: LazyLogging =>
-  // todo: refactor
   def withPermission[T](permission: Permission, resource: Any = None)(f: User => T)(implicit user: Option[User]): T = {
     user.fold(throw new UserSessionExpiredException()) { user =>
       if (user.role.authRules.isDefinedAt(permission, resource)(user)) {

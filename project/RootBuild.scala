@@ -46,7 +46,8 @@ object RootBuild extends Build {
         "com.typesafe" % "config" % "1.2.1",
         "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
         "ch.qos.logback" % "logback-classic" % "1.1.3",
-        "com.typesafe.slick" %% "slick" % "3.0.0",
+        "com.typesafe.slick" %% "slick" % "3.0.0-RC2",
+        "com.h2database" % "h2" % "1.3.175",
 
         // test packages
         "org.specs2" %% "specs2-mock" % "3.3.1" % Test,
