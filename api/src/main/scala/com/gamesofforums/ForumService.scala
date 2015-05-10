@@ -12,14 +12,15 @@ import com.wix.accord.{Failure, Success}
 /**
  * Created by lidanh on 4/5/15.
  */
-class ForumService(forum: Forum,
+class ForumService(forum: Forum,   // todo: remove forum
+                   db: InMemoryStorage,
                    passwordHasher: PasswordHasher = SHA1Hash,
                    mailService: MailService) extends AuthorizationSupport with LazyLogging {
 
   def register(firstName: String, lastName: String, mail: String, password: String): Try[User] = {
     Try {
       // check duplication
-      if (forum.users.exists(_.mail == mail)) throw RegistrationException("User already registered")
+      if (db.users.exists(_.mail == mail)) throw RegistrationException("User already registered")
 
       val user = User(
         firstName,
@@ -31,7 +32,7 @@ class ForumService(forum: Forum,
 
       user.validate and forum.policy.passwordPolicy.validate(password) match {
         case Success => {
-          forum.users += user
+          db.users += user
           logger.info(s"User ${user.mail} has registered successfully.")
 
           // send verification mail
@@ -46,7 +47,7 @@ class ForumService(forum: Forum,
 
   def login(mail: String, password: String): Try[User] = {
     Try {
-      forum.users.find(_.mail == mail) match {
+      db.users.find(_.mail == mail) match {
         case Some(user) if user.password == passwordHasher.hash(password) => {
           logger.info(s"User ${user.mail} has logged in successfully.")
           user
@@ -67,11 +68,11 @@ class ForumService(forum: Forum,
     Try {
       withPermission(ManageSubForums) {
         val subForum = SubForum(name)
-        forum.users.filter(u => moderators.contains(u.mail)).foreach(u => u is Moderator(subForum))
+        db.users.filter(u => moderators.contains(u.mail)).foreach(u => u is Moderator(subForum))
 
         subForum.validate(forum.policy) match {
           case Success => {
-            forum.subForums += subForum
+            db.subforums += subForum
             logger.info(s"Subforum ${subForum} has created successfully.")
             subForum
           }
@@ -145,7 +146,7 @@ class ForumService(forum: Forum,
 
         report.validate match {
           case Success => {
-            forum.reports += report
+            db.reports += report
             report
           }
           case Failure(violations) => throw new InvalidDataException(violations)
@@ -157,8 +158,8 @@ class ForumService(forum: Forum,
   def deleteSubforum(subforum: SubForum)(implicit user: Option[User] = None): Try[Unit] = {
     Try {
       withPermission(ManageSubForums) {
-        if (forum.subForums.contains(subforum)) {
-          forum.subForums -= subforum
+        if (db.subforums.contains(subforum)) {
+          db.subforums -= subforum
         } else {
           throw new SubForumException("subforum was not found")
         }

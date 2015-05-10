@@ -4,7 +4,7 @@ import com.gamesofforums.domain.PasswordPolicy.WeakPasswordPolicy
 import com.gamesofforums.domain._
 import com.gamesofforums.exceptions._
 import com.gamesofforums.matchers.ForumMatchers
-import com.gamesofforums.{ForumService, MailService}
+import com.gamesofforums.{InMemoryStorage, ForumService, MailService}
 import org.mockito.Matchers
 import org.specs2.matcher.{AlwaysMatcher, Matcher}
 import org.specs2.mock.Mockito
@@ -30,9 +30,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         println(s"mail sent to $recipients: $subject / $content")
       }
     }
-    
+
+    val db = new InMemoryStorage
     val forum = Forum(policy = ForumPolicy())
-    val forumService = new ForumService(forum = forum, mailService = mailService)
+    val forumService = new ForumService(forum = forum, db = db, mailService = mailService)
   }
 
   trait ForumAdminUser extends Scope {
@@ -99,7 +100,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
     }
 
     "failed for an invalid password (doesn't meet the current password policy)" in new Ctx {
-      val userManagerWithPolicy = new ForumService(forum = Forum(policy = ForumPolicy(WeakPasswordPolicy)), mailService = mailService)
+      val userManagerWithPolicy = new ForumService(
+        forum = Forum(policy = ForumPolicy(WeakPasswordPolicy)),
+        db = db,
+        mailService = mailService)
 
       userManagerWithPolicy.register(
         firstName = firstName,
@@ -110,7 +114,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
     "send verification code to user's email upon registration" in new Ctx {
       val mockMailService = mock[MailService]
-      val mockedService = new ForumService(forum = forum, mailService = mockMailService)
+      val mockedService = new ForumService(
+        forum = forum,
+        db = db,
+        mailService = mockMailService)
 
       val result = mockedService.register(firstName, lastName, someEmail, somePass)
 
@@ -153,7 +160,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       val result = forumService.createSubforum(name = subforumName, moderators = List(someEmail))
 
       result must beSuccessful(subForumWith(name = subforumName))
-      forum.subForums must contain(result.get())
+      db.subforums must contain(result.get())
     }
 
     "failed for invalid subforum" in new Ctx with ForumAdminUser {
@@ -165,7 +172,10 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
 
     "failed when the subforum does not meet the forum policy" in new Ctx with ForumAdminUser {
       val someForumWithNoModeratorsPolicy = Forum(policy = ForumPolicy(minModerators = 0, maxModerators = 0))
-      val service = new ForumService(forum = someForumWithNoModeratorsPolicy, mailService = mailService)
+      val service = new ForumService(
+        forum = someForumWithNoModeratorsPolicy,
+        db = db,
+        mailService = mailService)
       service.register("blabla", "blabla", someEmail, "blabla")
 
       service.createSubforum("some subforum", List(someEmail)) must beDataViolationFailure(withViolation("moderators count" -> "got 1, expected between 0 and 0"))
@@ -267,7 +277,7 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       val result = forumService.report(subforum, user, moderator, someContent)
 
       result must beSuccessful(reportWith(someContent))
-      forum.reports must contain(result.get())
+      db.reports must contain(result.get())
     }
 
     "success if the user was already published a comment in the moderator's subforum" in new ReportCtx with NormalUser {
@@ -325,13 +335,13 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
   }
 
   "subforum deletion" should {
-    "success if the subforum exists // TBI: permissions" in new Ctx with ForumAdminUser {
+    "success if the subforum exists" in new Ctx with ForumAdminUser {
       val moderatorMail = "some@moderator.com"
-      forum.users += User("bibi", "bugi", moderatorMail, "1234")
-      val sub = forumService.createSubforum("someLand", Seq(moderatorMail)).get()
+      db.users += User("bibi", "bugi", moderatorMail, "1234")
+      val deletedSubforum = forumService.createSubforum("someLand", Seq(moderatorMail)).get()
 
-      forumService.deleteSubforum(sub) must beSuccessful[Unit]
-      forum.subForums must not(contain(sub))
+      forumService.deleteSubforum(deletedSubforum) must beSuccessful[Unit]
+      db.subforums must not(contain(deletedSubforum))
     }
 
     "failed if the subforum doesnt exist" in new Ctx with ForumAdminUser {
