@@ -73,7 +73,7 @@ class ForumService(forum: Forum,   // todo: remove forum
 
   def createSubforum(name: String, moderators: Seq[String])(implicit user: Option[User] = None): Try[SubForum] = {
     Try {
-      withPermission(ManageSubForums) {
+      withPermission(ManageSubForums) { user =>
         val subForum = SubForum(id = generateId, name = name)
         db.users.filter(u => moderators.contains(u.mail)).foreach(u => u is Moderator(subForum))
 
@@ -93,8 +93,7 @@ class ForumService(forum: Forum,   // todo: remove forum
     Try {
       val subForum = getValue(db.subforums.find(_.id == subForumId), subForumId)
 
-      withPermission(Publish) {
-        val loggedInUser = user.get // todo: fix
+      withPermission(Publish) { loggedInUser =>
 
         val post = Post(
           id = generateId,
@@ -120,16 +119,14 @@ class ForumService(forum: Forum,   // todo: remove forum
 
   def publishComment(parentMessageId: Id, content: String)(implicit user: Option[User] = None): Try[Comment] = {
     Try {
-      withPermission(Publish) {
-        val loggedInUser = user.get
-
+      withPermission(Publish) { loggedInUser =>
         val parent = getValue(db.messages.find(_.id == parentMessageId), parentMessageId)
 
         val comment = Comment(
           id = generateId,
           content = content,
           parent = parent,
-          postedBy = loggedInUser) // todo: fix
+          postedBy = loggedInUser)
 
         comment.validate match {
           case Success => {
@@ -152,11 +149,10 @@ class ForumService(forum: Forum,   // todo: remove forum
 
   def report(subforumId: Id, moderatorId: Id, reportContent: String)(implicit user: Option[User] = None): Try[Report] = {
     Try {
-      val subforum = db.subforums.find(_.id == subforumId).get // todo:fix
-      val moderator = db.users.find(_.id == moderatorId).get // todo: fix
+      val subforum = getValue(db.subforums.find(_.id == subforumId), subforumId)
+      val moderator = getValue(db.users.find(_.id == moderatorId), moderatorId)
 
-      withPermission(ReportUsers) {
-        val reportedUser = user.get
+      withPermission(ReportUsers) { reportedUser =>
         // validate that the reported user has already posted in the given subforum
         if (!subforum.messages.exists(m => m.postedBy == reportedUser))
           throw new ReportException("User hasn't publish a message the given subforum")
@@ -184,7 +180,7 @@ class ForumService(forum: Forum,   // todo: remove forum
 
   def deleteSubforum(subforumId: Id)(implicit user: Option[User] = None): Try[Unit] = {
     Try {
-      withPermission(ManageSubForums) {
+      withPermission(ManageSubForums) { user =>
         db.subforums.find(_.id == subforumId) match {
           case Some(s) => db.subforums -= s
           case _ => throw new SubForumException("subforum was not found")

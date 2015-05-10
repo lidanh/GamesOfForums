@@ -401,6 +401,24 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
       forumService.report(subforum.id, regularUser.id, "blabla") must beFailure[Report, ReportException]("The given moderator is not a moderator in the given subforum")
     }
 
+    "failed if the given subforum does not exist" in new ReportCtx with NormalUser {
+      val unknownSubforum = SubForum(name = "unknown subforum")
+
+      forumService.publishPost(
+        subForumId = unknownSubforum.id,
+        subject = "test post",
+        content = "bla bla"
+      )
+
+      forumService.report(unknownSubforum.id, moderator.id, "blabla") must beFailure[Report, ObjectNotFoundException](contain(unknownSubforum.id))
+    }
+
+    "failed if the given moderator does not exist" in new ReportCtx with NormalUser {
+      val unknownModerator = moderator.copy(id = generateId)
+
+      forumService.report(subforum.id, unknownModerator.id, "blabla") must beFailure[Report, ObjectNotFoundException](contain(unknownModerator.id))
+    }
+
     "failed for unauthorized user (doesn't have permission to report)" in new ReportCtx {
       forumService.report(subforum.id, moderator.id, "blabla") must beSessionExpiredFailure
     }
