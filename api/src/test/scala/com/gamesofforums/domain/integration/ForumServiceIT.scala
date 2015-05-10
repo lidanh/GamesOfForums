@@ -202,15 +202,13 @@ class ForumServiceIT extends Specification with ForumMatchers with Mockito {
         content = ===(someContent),
         postedBy = ===(fakeUser),
         subscribers = contain(fakeUser)))
-
-      fakeSubforum.messages must contain(result.get())
-      fakeUser.messages must contain(result.get())
-      db.messages must contain(result.get())
     }
 
-    "add the published post to the user's posts" in new PublishCtx with NormalUser {
+    "persist the published post in db, user messages and subforum messages" in new PublishCtx with NormalUser {
       val post = forumService.publishPost(fakeSubforum, "bibi", "buzi", fakeUser).get()
 
+      db.messages must contain(post)
+      fakeSubforum.messages must contain(post)
       fakeUser.messages must contain(post)
     }
 
