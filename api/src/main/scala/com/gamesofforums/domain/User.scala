@@ -9,7 +9,7 @@ import scala.util.matching.Regex
 /**
  * Created by lidanh on 4/5/15.
  */
-case class User(id: Id = generateId,
+case class User(id: IdType = generateId,
                 firstName: String,
                 lastName: String,
                 mail: String,

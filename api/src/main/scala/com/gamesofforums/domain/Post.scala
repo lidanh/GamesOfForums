@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 /**
  * Created by Guy Gonen on 08/04/2015.
  */
-case class Post(override val id: Id = generateId,
+case class Post(override val id: IdType = generateId,
                 subject: String,
                 override val content: String,
                 override val postedBy: User,

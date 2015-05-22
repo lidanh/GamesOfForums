@@ -6,7 +6,7 @@ import java.util.UUID
  * Created by lidanh on 5/10/15.
  */
 package object domain {
-  type Id = String
+  type IdType = String
 
-  def generateId: Id = UUID.randomUUID().toString
+  def generateId: IdType = UUID.randomUUID().toString
 }

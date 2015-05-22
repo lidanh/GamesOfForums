@@ -1,19 +1,19 @@
 package com.gamesofforums.dbschema
 
-import com.gamesofforums.ForumStorage
+import com.gamesofforums.{domain, ForumStorage}
 import com.gamesofforums.domain._
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{Future, Await}
-import scala.concurrent.duration.Duration
 import slick.driver.H2Driver.api._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Created by lidanh on 5/10/15.
  */
 class SlickStorage extends ForumStorage {
-  override val subforums = TableQuery[SubForums]
+  override val subforums: TableQuery[SubForums] = TableQuery[SubForums]
   override val users = ListBuffer[User]()
   override val reports = ListBuffer[Report]()
   override val messages =  new mutable.UnrolledBuffer[Message]() {
@@ -45,9 +45,20 @@ class SlickStorage extends ForumStorage {
     (subforums.schema).create
   )
 
+  val sf = SubForum(name = "test")
+
+  subforums += sf
+
+
+
   db.run(setupAction)
 }
 
 object SlickStorage {
   val ConfigKeyName = "db"
+}
+
+
+object Test extends App {
+  val db = new SlickStorage
 }

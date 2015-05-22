@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 /**
  * Created by Guy Gonen on 05/04/2015.
  */
-case class SubForum(id: Id = generateId,
+case class SubForum(id: IdType = generateId,
                     name: String) extends ValidationSupport {
   private[domain] val _moderators: ListBuffer[Moderator] = ListBuffer.empty
   val messages = ListBuffer[Message]()

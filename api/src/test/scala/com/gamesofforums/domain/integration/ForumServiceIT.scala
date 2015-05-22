@@ -1,5 +1,6 @@
 package com.gamesofforums.domain.integration
 
+import com.gamesofforums.dbschema.SlickStorage
 import com.gamesofforums.domain.PasswordPolicy.WeakPasswordPolicy
 import com.gamesofforums.domain._
 import com.gamesofforums.exceptions._

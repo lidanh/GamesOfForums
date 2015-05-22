@@ -2,12 +2,14 @@ package com.gamesofforums
 
 import java.util.UUID
 
+import com.gamesofforums.dbschema.{SlickStorage}
 import com.gamesofforums.domain._
 import com.gamesofforums.exceptions.DataValidationImplicits._
 import com.gamesofforums.exceptions._
 import com.twitter.util.Try
 import com.typesafe.scalalogging.LazyLogging
 import com.wix.accord.{Failure, Success}
+import slick.driver.H2Driver.api._
 
 /**
  * Created by lidanh on 4/5/15.
@@ -17,7 +19,7 @@ class ForumService(forum: Forum,   // todo: remove forum
                    passwordHasher: PasswordHasher = SHA1Hash,
                    mailService: MailService) extends AuthorizationSupport with LazyLogging {
 
-  def getValue[T](obj: Option[T], id: Id): T = {
+  def getValue[T](obj: Option[T], id: IdType): T = {
     obj match {
       case Some(t) => t
       case _ => throw new ObjectNotFoundException(id)
@@ -89,7 +91,7 @@ class ForumService(forum: Forum,   // todo: remove forum
     }
   }
 
-  def publishPost(subForumId: Id, subject: String, content: String)(implicit user: Option[User] = None): Try[Post] = {
+  def publishPost(subForumId: IdType, subject: String, content: String)(implicit user: Option[User] = None): Try[Post] = {
     Try {
       val subForum = getValue(db.subforums.find(_.id == subForumId), subForumId)
 
@@ -117,7 +119,7 @@ class ForumService(forum: Forum,   // todo: remove forum
     }
   }
 
-  def publishComment(parentMessageId: Id, content: String)(implicit user: Option[User] = None): Try[Comment] = {
+  def publishComment(parentMessageId: IdType, content: String)(implicit user: Option[User] = None): Try[Comment] = {
     Try {
       withPermission(Publish) { loggedInUser =>
         val parent = getValue(db.messages.find(_.id == parentMessageId), parentMessageId)
@@ -147,7 +149,7 @@ class ForumService(forum: Forum,   // todo: remove forum
     }
   }
 
-  def report(subforumId: Id, moderatorId: Id, reportContent: String)(implicit user: Option[User] = None): Try[Report] = {
+  def report(subforumId: IdType, moderatorId: IdType, reportContent: String)(implicit user: Option[User] = None): Try[Report] = {
     Try {
       val subforum = getValue(db.subforums.find(_.id == subforumId), subforumId)
       val moderator = getValue(db.users.find(_.id == moderatorId), moderatorId)
@@ -178,7 +180,7 @@ class ForumService(forum: Forum,   // todo: remove forum
     }
   }
 
-  def deleteSubforum(subforumId: Id)(implicit user: Option[User] = None): Try[Unit] = {
+  def deleteSubforum(subforumId: IdType)(implicit user: Option[User] = None): Try[Unit] = {
     Try {
       withPermission(ManageSubForums) { user =>
         db.subforums.find(_.id == subforumId) match {
