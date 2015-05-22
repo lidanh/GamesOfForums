@@ -19,6 +19,16 @@ class ForumService(forum: Forum,   // todo: remove forum
                    passwordHasher: PasswordHasher = SHA1Hash,
                    mailService: MailService) extends AuthorizationSupport with LazyLogging {
 
+  import db._
+
+  def getValueSeq[T](obj: Seq[T], id: IdType): T = {
+    obj.headOption match {
+      case Some(t) => t
+      case _ => throw new ObjectNotFoundException(id)
+    }
+  }
+
+
   def getValue[T](obj: Option[T], id: IdType): T = {
     obj match {
       case Some(t) => t
@@ -81,7 +91,7 @@ class ForumService(forum: Forum,   // todo: remove forum
 
         subForum.validate(forum.policy) match {
           case Success => {
-            val newSubforum = db.subforums += subForum
+            val newSubforum = addSubforum(subForum)
             logger.info(s"Subforum ${subForum} has created successfully.")
             subForum
           }
@@ -91,9 +101,10 @@ class ForumService(forum: Forum,   // todo: remove forum
     }
   }
 
-  def publishPost(subForumId: IdType, subject: String, content: String)(implicit user: Option[User] = None): Try[Post] = {
+  def publishPost(subforumId: IdType, subject: String, content: String)(implicit user: Option[User] = None): Try[Post] = {
     Try {
-      val subForum = getValue(db.subforums.find(_.id == subForumId), subForumId)
+
+      val subForum = getSubforum(subforumId).getOrElse(throw new ObjectNotFoundException(subforumId))
 
       withPermission(Publish) { loggedInUser =>
 
@@ -151,7 +162,7 @@ class ForumService(forum: Forum,   // todo: remove forum
 
   def report(subforumId: IdType, moderatorId: IdType, reportContent: String)(implicit user: Option[User] = None): Try[Report] = {
     Try {
-      val subforum = getValue(db.subforums.find(_.id == subforumId), subforumId)
+      val subforum = getSubforum(subforumId).getOrElse(throw new ObjectNotFoundException(subforumId))
       val moderator = getValue(db.users.find(_.id == moderatorId), moderatorId)
 
       withPermission(ReportUsers) { reportedUser =>
@@ -183,10 +194,7 @@ class ForumService(forum: Forum,   // todo: remove forum
   def deleteSubforum(subforumId: IdType)(implicit user: Option[User] = None): Try[Unit] = {
     Try {
       withPermission(ManageSubForums) { user =>
-        db.subforums.find(_.id == subforumId) match {
-          case Some(s) => db.subforums -= s
-          case _ => throw new SubForumException("subforum was not found")
-        }
+        db.deleteSubforum(subforumId)
       }
     }
   }

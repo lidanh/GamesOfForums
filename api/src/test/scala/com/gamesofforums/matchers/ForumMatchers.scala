@@ -1,11 +1,13 @@
 package com.gamesofforums.matchers
 
-import com.gamesofforums.domain.{Post, Role, User}
+import com.gamesofforums.domain._
 import com.gamesofforums.exceptions.{UserSessionExpiredException, AuthorizationException, DataViolation, InvalidDataException}
 import com.shingimmel.ShinGimmelMatchers
 import com.shingimmel.dsl.Permission
 import com.twitter.util.{Throw, Try}
 import org.specs2.matcher.{AlwaysMatcher, Expectable, MatchResult, Matcher, _}
+
+import scala.collection.mutable.ListBuffer
 
 /**
  * Created by lidanh on 4/19/15.
@@ -47,4 +49,38 @@ trait ForumMatchers extends TwitterTryMatchers with ShinGimmelMatchers { this: M
   def havePermissionTo(permission: Permission)(resource: Any)(implicit user: User): Matcher[Role] = {
     havePermissionTo[User](permission)(resource)(user) ^^ { (_: Role).authRules aka "user authorization rules" }
   }
+
+  def userWith(mail: Matcher[String] = AlwaysMatcher(),
+               password: Matcher[String] = AlwaysMatcher()): Matcher[User] = {
+    mail ^^ {
+      (_: User).mail
+    } and
+      password ^^ {
+        (_: User).password
+      }
+  }
+
+  def postWith(subject: Matcher[String] = AlwaysMatcher(),
+               content: Matcher[String] = AlwaysMatcher(),
+               postedBy: Matcher[User] = AlwaysMatcher(),
+               subscribers: Matcher[ListBuffer[User]] = AlwaysMatcher()) = {
+    subject ^^ {
+      (_: Post).subject
+    } and
+      content ^^ {
+        (_: Post).content
+      } and
+      postedBy ^^ {
+        (_: Post).postedBy
+      } and
+      subscribers ^^ {
+        (_: Post).subscribers
+      }
+  }
+
+  def subForumWith(name: String): Matcher[SubForum] = ===(name) ^^ { (_: SubForum).name aka "sub forum name" }
+
+  def commentWith(content: String): Matcher[Comment] = ===(content) ^^ { (_: Comment).content aka "comment content" }
+
+  def reportWith(content: String): Matcher[Report] = ===(content) ^^ { (_: Report).content aka "report content" }
 }
