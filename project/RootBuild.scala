@@ -1,21 +1,28 @@
+import play.PlayImport._
+import play.PlayScala
 import sbt.Keys._
 import sbt._
 
 object RootBuild extends Build {
+  val appName = "games-of-forums"
+  val appVersion = "1.0-SNAPSHOT"
+
   lazy val testsSettings = Seq(
     libraryDependencies ++= Seq(
       "org.specs2" %% "specs2-core" % "3.3.1" % Test,
+      "org.specs2" %% "specs2-junit" % "3.3.1" % Test,
       "org.specs2" %% "specs2-html" % "3.3.1" % Test)
   )
 
   lazy val commonSettings = Seq(
-    name := "games-of-forums",
-    version := "1.0",
+    name := appName,
+    version := appVersion,
     scalaVersion := "2.11.6",
     // resolvers
     resolvers ++= Seq(
       "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases",
-      "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"),
+      "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+      "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"),
     scalacOptions ++= Seq("-feature", "-language:implicitConversions"),
     scalacOptions in Test ++= Seq("-Yrangepos"),
     testOptions in Test += Tests.Argument("console")
@@ -32,12 +39,12 @@ object RootBuild extends Build {
       name := "shin-gimmel"
     )
 
-  lazy val apiModule = (project in file("api")).
+  lazy val coreModule = (project in file("core")).
     dependsOn(shingimmel % "test->test;compile->compile").
     settings(commonSettings: _*).
     settings(testsSettings: _*).
     settings(
-      name := "api",
+      name := s"$appName-core",
 
       libraryDependencies ++= Seq(
         "com.twitter" % "util-core_2.10" % "6.23.0",
@@ -53,4 +60,24 @@ object RootBuild extends Build {
         "org.specs2" %% "specs2-mock" % "3.3.1" % Test,
         "com.wix" %% "accord-specs2" % "0.5-SNAPSHOT" % Test intransitive())
     )
+
+  lazy val webModule = (project in file("web")).
+    enablePlugins(PlayScala).
+    dependsOn(coreModule).
+    settings(commonSettings: _*).
+    settings(testsSettings: _*).
+    settings(
+      name := s"$appName-web",
+
+      libraryDependencies ++= Seq(
+        "com.typesafe.play" %% "play-test" % "2.3.8" % Test excludeAll(
+          ExclusionRule(organization = "org.specs2")
+          ),
+        jdbc,
+        anorm,
+        cache,
+        ws
+        )
+    )
+
 }
