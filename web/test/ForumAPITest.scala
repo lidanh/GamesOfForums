@@ -30,7 +30,7 @@ class ForumAPITest extends Specification with JsonMatchers {
       val invalidDetails = Seq(
         "firstname" -> "kuki",
         "lastname" -> "buki",
-        "mail" -> "gg",
+        "mail" -> "invalid mail",
         "password" -> "p@ssw0rd"
       )
       val response = route(FakeRequest(POST, registerEndpoint).withFormUrlEncodedBody(invalidDetails: _*)).get
