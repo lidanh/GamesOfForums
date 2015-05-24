@@ -1,3 +1,4 @@
+import com.gamesofforums.domain._
 import org.specs2.mutable.Specification
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, WithApplication}
@@ -6,6 +7,8 @@ import org.specs2.matcher.JsonMatchers
 class ForumAPITest extends Specification with JsonMatchers {
 
   val baseEndpoint = "/api"
+
+  sequential
 
   "User registeration" should {
     val registerEndpoint = s"$baseEndpoint/register"
@@ -73,5 +76,56 @@ class ForumAPITest extends Specification with JsonMatchers {
 
     }
   }
+
+  "Create Subforum" should {
+
+    val createSubForumEndpoint = s"$baseEndpoint/createSubforum"
+    val registerEndpoint = s"$baseEndpoint/register"
+
+    "success if valid details" in new WithApplication() {
+
+
+      /*val validModeratorDetails = Seq(
+        "firstname" -> "first",
+        "lastname" -> "name",
+        "mail" -> "moderator@mailmail.com",
+        "password" -> "p@ssw0rd"
+      )*/
+
+      val validModerators2Details = Seq(
+        "firstname" -> "first",
+        "lastname" -> "name",
+        "mail" -> "admin@mailmail.com",
+        "password" -> "p@ssw0rd"
+      )
+
+      val validCreateForumDetalis = Seq(
+        "name" -> "subforum name",
+        "moderators" -> "admin@mailmail.com" //Todo: adding support to more than one moderator.
+      )
+
+      route(FakeRequest(POST, registerEndpoint).withFormUrlEncodedBody(validModerators2Details: _*))
+      val response = route(FakeRequest(POST, createSubForumEndpoint).withFormUrlEncodedBody(validCreateForumDetalis: _*)).get
+
+      status(response) must be_==(OK)
+      contentAsString(response) must /("subforum_id" -> ".+".r)
+
+    }
+
+    "Fail if invalid details" in new WithApplication() {
+      val invalidCreateForumDetalis = Seq(
+        "name" -> "subforum name",
+        "moderators" -> "no-mail" //Todo: adding support to more than one moderator.
+      )
+
+      val response = route(FakeRequest(POST, createSubForumEndpoint).withFormUrlEncodedBody(invalidCreateForumDetalis: _*)).get
+      status(response) must be_==(BAD_REQUEST)
+      contentAsString(response) must /("error" -> "Invalid data")
+    }
+
+  }
+
+
+
 
 }

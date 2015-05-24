@@ -2,7 +2,7 @@ package controllers
 
 import com.gamesofforums.exceptions.{LoginException, InvalidDataException}
 import com.gamesofforums.{MailService, SendGridService, InMemoryStorage, ForumService}
-import com.gamesofforums.domain.{ForumPolicy, Forum}
+import com.gamesofforums.domain._
 import com.twitter.util.{Throw, Return}
 import play.api.data._
 import play.api.data.Forms._
@@ -52,6 +52,29 @@ object ForumAPI extends Controller {
       case Throw(e) => BadRequest(errorResult(e.getMessage))
     }
   }
+
+  /* Post /api/createSubForum */
+  def createSubforum = Action { implicit request =>
+    val data = createSubForumForm.bindFromRequest.get
+
+    // Todo: how to pass user implicitly.
+    implicit val adminUser = Some(User(
+      generateId,
+      firstName = "some admin",
+      lastName = "some admin",
+      mail = "mailmailmail@mail.com",
+      password = "****",
+      _role = ForumAdmin))
+
+    service.createSubforum(
+      name = data.name,
+      moderators = Seq(data.moderators)
+    ) match {
+      case Return(subforum) => Ok(Json.obj("subforum_id" -> subforum.id))
+      case Throw(e: InvalidDataException) => BadRequest(errorResult(e.getMessage, Some(e.invalidData.mkString(", "))))
+      case Throw(e) => BadRequest(errorResult(e.getMessage))
+    }
+  }
 }
 
 object APIHelpers {
@@ -66,15 +89,19 @@ object APIHelpers {
     "password" -> text
   )(RegistrationData.apply)(RegistrationData.unapply))
 
+  /* Create subforum form */
+  case class SubforumData(name: String, moderators: String)
+  val createSubForumForm = Form(mapping(
+    "name" -> text,
+    "moderators" -> text
+  )(SubforumData.apply)(SubforumData.unapply))
+
   /* Login form */
   case class LoginData(mail: String, password: String)
   val loginForm = Form(mapping(
     "mail" -> text,
     "password" -> text
   )(LoginData.apply)(LoginData.unapply))
-
-
-
 
   def errorResult(exceptionMessage: String, content: Option[String] = None) = {
     val base = Json.obj(
