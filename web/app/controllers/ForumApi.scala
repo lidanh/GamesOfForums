@@ -75,6 +75,51 @@ object ForumAPI extends Controller {
       case Throw(e) => BadRequest(errorResult(e.getMessage))
     }
   }
+
+  /* Post /api/publish */
+  var subforumIdExtract =""
+  var subjectdExtract = ""
+  var contentExtract = ""
+
+  def publishPost = Action { implicit request =>
+
+    publishForm.bindFromRequest.fold(
+    hasError =>{
+      // Failure
+      BadRequest("error")
+    },
+    userData => {
+        subforumIdExtract = userData.subforumId
+        subjectdExtract = userData.subject
+        contentExtract = userData.content
+    })
+
+    /*val data = publishForm.bindFromRequest.get
+      })*/
+
+    val id : IdType =  subforumIdExtract
+
+
+    implicit val adminUser = Some(User(
+      generateId,
+      firstName = "God",
+      lastName = "God",
+      mail = "God@mail.com",
+      password = "****",
+      _role = God))
+
+
+    service.publishPost(
+      subforumId = id,
+      subject = subjectdExtract,
+      content = contentExtract
+    ) match {
+      case Return(post) => Ok(Json.obj("post_id" -> post.id))
+      case Throw(e: InvalidDataException) => BadRequest(errorResult(e.getMessage, Some(e.invalidData.mkString(", "))))
+      case Throw(e) => BadRequest(errorResult(e.getMessage))
+    }
+  }
+
 }
 
 object APIHelpers {
@@ -102,6 +147,14 @@ object APIHelpers {
     "mail" -> text,
     "password" -> text
   )(LoginData.apply)(LoginData.unapply))
+
+  /* Publish form */
+  case class PublishData(subforumId: String, subject: String, content: String)
+  val publishForm = Form(mapping(
+    "subforumId" -> text,
+    "subject" -> text,
+    "content" ->text
+  )(PublishData.apply)(PublishData.unapply))
 
   def errorResult(exceptionMessage: String, content: Option[String] = None) = {
     val base = Json.obj(
