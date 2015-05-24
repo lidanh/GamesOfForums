@@ -1,6 +1,6 @@
 package controllers
 
-import com.gamesofforums.exceptions.InvalidDataException
+import com.gamesofforums.exceptions.{LoginException, InvalidDataException}
 import com.gamesofforums.{MailService, SendGridService, InMemoryStorage, ForumService}
 import com.gamesofforums.domain.{ForumPolicy, Forum}
 import com.twitter.util.{Throw, Return}
@@ -9,9 +9,7 @@ import play.api.data.Forms._
 import play.api.libs.json.Json
 import play.api.mvc._
 
-/**
- * Created by lidanh on 5/23/15.
- */
+
 object ForumAPI extends Controller {
   import APIHelpers._
 
@@ -40,6 +38,20 @@ object ForumAPI extends Controller {
       case Throw(e) => BadRequest(errorResult(e.getMessage))
     }
   }
+
+  /* Post /api/login */
+  def login = Action { implicit request =>
+    val data = loginForm.bindFromRequest.get
+
+    service.login(
+      mail = data.mail,
+      password = data.password
+    ) match {
+      case Return(user) => Ok(Json.obj("user_id" -> user.id))
+      case Throw(e: LoginException) => BadRequest(errorResult(e.getMessage, Some(e.message.mkString(", "))))
+      case Throw(e) => BadRequest(errorResult(e.getMessage))
+    }
+  }
 }
 
 object APIHelpers {
@@ -53,6 +65,15 @@ object APIHelpers {
     "mail" -> text,
     "password" -> text
   )(RegistrationData.apply)(RegistrationData.unapply))
+
+  /* Login form */
+  case class LoginData(mail: String, password: String)
+  val loginForm = Form(mapping(
+    "mail" -> text,
+    "password" -> text
+  )(LoginData.apply)(LoginData.unapply))
+
+
 
 
   def errorResult(exceptionMessage: String, content: Option[String] = None) = {
