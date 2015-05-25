@@ -80,6 +80,7 @@ object ForumAPI extends Controller {
   var subforumIdExtract =""
   var subjectdExtract = ""
   var contentExtract = ""
+  var commentIdExtract = ""
 
   def publishPost = Action { implicit request =>
 
@@ -93,12 +94,7 @@ object ForumAPI extends Controller {
         subjectdExtract = userData.subject
         contentExtract = userData.content
     })
-
-    /*val data = publishForm.bindFromRequest.get
-      })*/
-
     val id : IdType =  subforumIdExtract
-
 
     implicit val adminUser = Some(User(
       generateId,
@@ -107,7 +103,6 @@ object ForumAPI extends Controller {
       mail = "God@mail.com",
       password = "****",
       _role = God))
-
 
     service.publishPost(
       subforumId = id,
@@ -122,25 +117,63 @@ object ForumAPI extends Controller {
 
   /* Post /api/deleteSubforum */
   def deleteSubforum = Action { implicit request =>
-    val data = deleteSubforumForm.bindFromRequest.get
+      val data = deleteSubforumForm.bindFromRequest.get
 
-    // Todo: how to pass user implicitly.
+      // Todo: how to pass user implicitly.
+      implicit val adminUser = Some(User(
+        generateId,
+        firstName = "some admin",
+        lastName = "some admin",
+        mail = "mailmailmail@mail.com",
+        password = "****",
+        _role = ForumAdmin))
+
+      service.deleteSubforum(
+        subforumId = data.subforumId
+      ) match {
+        case Return(_:Unit) => Ok(Json.obj("OK" -> "Success"))
+        case Throw(e: InvalidDataException) => BadRequest(errorResult(e.getMessage, Some(e.invalidData.mkString(", "))))
+        case Throw(e) => BadRequest(errorResult(e.getMessage))
+      }
+    }
+
+
+  /* Post /api/publishComment */
+  def publishComment = Action { implicit request =>
+
+    publishCommentForm.bindFromRequest.fold(
+      hasError =>{
+        // Failure
+        println("failure?")
+        BadRequest("error")
+      },
+      userData => {
+        commentIdExtract = userData.parentMessageId
+        contentExtract = userData.content
+      })
+    val id : IdType =  commentIdExtract
+    println(id)
+
     implicit val adminUser = Some(User(
       generateId,
-      firstName = "some admin",
-      lastName = "some admin",
-      mail = "mailmailmail@mail.com",
+      firstName = "God",
+      lastName = "God",
+      mail = "God@mail.com",
       password = "****",
-      _role = ForumAdmin))
+      _role = God))
 
-    service.deleteSubforum(
-      subforumId = data.subforumId
+    service.publishComment(
+      parentMessageId = id,
+      content = contentExtract
     ) match {
-      case Return(_:Unit) => Ok(Json.obj("OK" -> "Success"))
+      case Return(comment) => Ok(Json.obj("comment_id" -> comment.id))
       case Throw(e: InvalidDataException) => BadRequest(errorResult(e.getMessage, Some(e.invalidData.mkString(", "))))
       case Throw(e) => BadRequest(errorResult(e.getMessage))
     }
   }
+
+
+
 
 }
 
@@ -170,13 +203,20 @@ object APIHelpers {
     "password" -> text
   )(LoginData.apply)(LoginData.unapply))
 
-  /* Publish form */
+  /* PublishPost form */
   case class PublishData(subforumId: String, subject: String, content: String)
   val publishForm = Form(mapping(
     "subforumId" -> text,
     "subject" -> text,
     "content" ->text
   )(PublishData.apply)(PublishData.unapply))
+
+  /* PublishComment form */
+  case class PublishCommentData(parentMessageId: String, content: String)
+  val publishCommentForm = Form(mapping(
+    "parentMessageId" -> text,
+    "content" ->text
+  )(PublishCommentData.apply)(PublishCommentData.unapply))
 
   /* deleteSubforum form */
   case class deleteSubforumData(subforumId: String)

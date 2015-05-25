@@ -243,4 +243,77 @@ class ForumAPITest extends Specification with JsonMatchers {
   }
 
 
+
+
+
+
+  sequential
+
+  "Publish Comment" should {
+
+    val createSubForumEndpoint = s"$baseEndpoint/createSubforum"
+    val registerEndpoint = s"$baseEndpoint/register"
+    val publishPostEndpoint = s"$baseEndpoint/publishPost"
+    val publishCommentEndpoint = s"$baseEndpoint/publishComment"
+
+    "success if valid details" in new WithApplication {
+
+      val validModerators2Details = Seq(
+        "firstname" -> "first",
+        "lastname" -> "name",
+        "mail" -> "adminadmin@mailmail.com",
+        "password" -> "p@ssw0rd"
+      )
+
+      val validCreateForumDetalis = Seq(
+        "name" -> "subforum name",
+        "moderators" -> "adminadmin@mailmail.com" //Todo: adding support to more than one moderator.
+      )
+
+      route(FakeRequest(POST, registerEndpoint).withFormUrlEncodedBody(validModerators2Details: _*))
+      val subforumextraction = route(FakeRequest(POST, createSubForumEndpoint).withFormUrlEncodedBody(validCreateForumDetalis: _*)).get
+      val forumids = contentAsString(subforumextraction)
+      // val check = contentAsJson(subforumextraction) \ "subforum_id"
+      val forumid = forumids.substring(16,forumids.length-2) // ContentAsJson.toString doesn't work, So this is the best i could find.
+      println(forumid)
+
+      val validPostDetails = Seq (
+        "subforumId" -> forumid,
+        "subject" -> "someSubject",
+        "content" -> "someContent"
+      )
+
+      val parentmessage = route(FakeRequest(POST, publishPostEndpoint).withFormUrlEncodedBody(validPostDetails: _*)).get
+      val parentids = contentAsString(parentmessage)
+      val parentid = parentids.substring(12,parentids.length-2) // ContentAsJson.toString doesn't work, So this is the best i could find.
+      println(parentid)
+      println(parentids)
+
+      val validCommentDetails = Seq (
+        "parentMessageId" -> parentid,
+        "content" -> "someContent"
+      )
+
+      val response = route(FakeRequest(POST, publishCommentEndpoint).withFormUrlEncodedBody(validCommentDetails: _*)).get
+
+
+      status(response) must be_==(OK)
+      contentAsString(response) must /("comment_id" -> ".+".r)
+
+    }
+
+    "Fail if invalid details" in new WithApplication() {
+      val invalidCommentDetails = Seq (
+        "parentMessageId" -> "No such ID",
+        "content" -> "someContent"
+      )
+
+      val response = route(FakeRequest(POST, publishCommentEndpoint).withFormUrlEncodedBody(invalidCommentDetails: _*)).get
+      status(response) must be_==(BAD_REQUEST)
+      contentAsString(response) must /("error" -> ".+".r)
+    }
+
+  }
+
+
 }
