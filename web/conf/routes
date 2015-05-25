@@ -11,6 +11,7 @@ POST        /api/register              controllers.ForumAPI.register
 POST        /api/login                 controllers.ForumAPI.login
 POST        /api/createSubforum        controllers.ForumAPI.createSubforum
 POST        /api/publishPost           controllers.ForumAPI.publishPost
+POST        /api/deleteSubforum        controllers.ForumAPI.deleteSubforum
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file              controllers.Assets.at(path="/public", file)

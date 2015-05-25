@@ -193,8 +193,54 @@ class ForumAPITest extends Specification with JsonMatchers {
 
   }
 
+  sequential
 
 
+  "Delete Subforum" should {
+
+    val createSubForumEndpoint = s"$baseEndpoint/createSubforum"
+    val registerEndpoint = s"$baseEndpoint/register"
+    val deleteSubForumEndpoint = s"$baseEndpoint/deleteSubforum"
+
+    "success if valid details" in new WithApplication {
+
+      val validModerators2Details = Seq(
+        "firstname" -> "first",
+        "lastname" -> "name",
+        "mail" -> "admin@mailmail.com",
+        "password" -> "p@ssw0rd"
+      )
+
+      val validCreateForumDetalis = Seq(
+        "name" -> "subforum name",
+        "moderators" -> "admin@mailmail.com" //Todo: adding support to more than one moderator.
+      )
+
+      route(FakeRequest(POST, registerEndpoint).withFormUrlEncodedBody(validModerators2Details: _*))
+      val subforumextraction = route(FakeRequest(POST, createSubForumEndpoint).withFormUrlEncodedBody(validCreateForumDetalis: _*)).get
+      val forumids = contentAsString(subforumextraction)
+      val forumid = forumids.substring(16,forumids.length-2) // ContentAsJson.toString doesn't work, So this is the best i could find.
+
+      val validDeleteSubforum = Seq (
+        "subforumId" -> forumid
+      )
+
+      val response = route(FakeRequest(POST, deleteSubForumEndpoint).withFormUrlEncodedBody(validDeleteSubforum: _*)).get
+      status(response) must be_==(OK)
+      contentAsString(response) must /("OK" -> ".+".r)
+
+    }
+
+    "Fail if invalid details" in new WithApplication() {
+      val invalidDeleteSubforum = Seq (
+        "subforumId" -> "No such ID"
+      )
+      val response = route(FakeRequest(POST, deleteSubForumEndpoint).withFormUrlEncodedBody(invalidDeleteSubforum: _*)).get
+      status(response) must be_==(BAD_REQUEST)
+      contentAsString(response) must /("error" -> "No such ID was not found.")
+    }
+
+  }
 
 
 }

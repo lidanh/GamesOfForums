@@ -194,7 +194,8 @@ class ForumService(forum: Forum,   // todo: remove forum
   def deleteSubforum(subforumId: IdType)(implicit user: Option[User] = None): Try[Unit] = {
     Try {
       withPermission(ManageSubForums) { user =>
-        db.deleteSubforum(subforumId)
+        val subForum = getSubforum(subforumId).getOrElse(throw new ObjectNotFoundException(subforumId))
+        db.deleteSubforum(subForum.id)
       }
     }
   }

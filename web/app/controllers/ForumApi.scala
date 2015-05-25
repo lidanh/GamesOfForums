@@ -120,6 +120,28 @@ object ForumAPI extends Controller {
     }
   }
 
+  /* Post /api/deleteSubforum */
+  def deleteSubforum = Action { implicit request =>
+    val data = deleteSubforumForm.bindFromRequest.get
+
+    // Todo: how to pass user implicitly.
+    implicit val adminUser = Some(User(
+      generateId,
+      firstName = "some admin",
+      lastName = "some admin",
+      mail = "mailmailmail@mail.com",
+      password = "****",
+      _role = ForumAdmin))
+
+    service.deleteSubforum(
+      subforumId = data.subforumId
+    ) match {
+      case Return(_:Unit) => Ok(Json.obj("OK" -> "Success"))
+      case Throw(e: InvalidDataException) => BadRequest(errorResult(e.getMessage, Some(e.invalidData.mkString(", "))))
+      case Throw(e) => BadRequest(errorResult(e.getMessage))
+    }
+  }
+
 }
 
 object APIHelpers {
@@ -155,6 +177,12 @@ object APIHelpers {
     "subject" -> text,
     "content" ->text
   )(PublishData.apply)(PublishData.unapply))
+
+  /* deleteSubforum form */
+  case class deleteSubforumData(subforumId: String)
+  val deleteSubforumForm = Form(mapping(
+    "subforumId" -> text
+  )(deleteSubforumData.apply)(deleteSubforumData.unapply))
 
   def errorResult(exceptionMessage: String, content: Option[String] = None) = {
     val base = Json.obj(
